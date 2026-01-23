@@ -515,8 +515,22 @@
 
                 const studentsFromDB = await window.DBService.getStudents();
 
-                // Update Global State
+                // Update Global State AND Local Scope Reference
                 window.students = studentsFromDB;
+
+                // CRITICAL FIX: Update the local 'students' variable that getFilteredStudents uses
+                // Just in case it's not referencing window.students directly (scope capture)
+                if (typeof students !== 'undefined') {
+                    // If students is a 'let', we can reassign it if we are in the same scope.
+                    // But if it's top level, we might need to rely on side effects.
+                    // Instead, let's just clear the array and push new items if it's a const, 
+                    // or reassign if we can. 
+                    // Safest approach if we can't reassign local 'let': Array splice.
+                    if (Array.isArray(students)) {
+                        students.length = 0;
+                        students.push(...studentsFromDB);
+                    }
+                }
 
                 // Refresh UI
                 if (typeof renderStudents === 'function') renderStudents();
