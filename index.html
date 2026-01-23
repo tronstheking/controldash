@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Security Policy: Allow Firebase & Google -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; media-src *;">
+    <title>Academia CTD | Control Estudiantil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="stylesheet" href="style.css?v=110">
+    <link rel="stylesheet" href="calendar_v2.css">
+    <link rel="stylesheet" href="attendance_modern.css">
+    <link rel="stylesheet" href="deliverables_modern.css">
+    <link rel="stylesheet" href="pensum_modern.css">
+    <link rel="stylesheet" href="schedule_modern.css">
+    <link rel="stylesheet" href="modern_dashboard.css">
+    <link rel="stylesheet" href="settings_modern.css">
+    <link rel="stylesheet" href="deliverables_cards.css">
+
+    <!-- Firebase SDK v9 (Compatible Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Config & Services -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="db-service.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- EXCEL & CONFETTI LIBS -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Interactive Metric Cards -->
+    <script src="metric_cards_interactive.js" defer></script>
+
+    <!-- Topic Advancement Functions -->
+    <script src="avanzar_temario.js" defer></script>
+    <script src="advance_topic_ui.js" defer></script>
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo-academy.png">
+    <link rel="icon" type="image/png" href="logo-academy.png">
+    <meta name="theme-color" content="#16234d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        /* Ticker Animation */
+        .ticker-container {
+            display: inline-flex;
+            align-items: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            padding-bottom: 10px;
+            min-height: 24px;
+        }
+
+        #ticker-text {
+            display: inline-block;
+            transition: all 0.5s ease;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 14px;
+            background-color: rgba(255, 255, 255, 0.6);
+            margin-left: 4px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .text-exit {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        .text-enter {
+            animation: slideUp 0.5s forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <style>
+        /* God Level Ticker Animation */
+        .ticker-wrap {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+
+        .ticker {
+            display: flex;
+            white-space: nowrap;
+            /* Infinite scroll logic: 2 sets of items */
+            animation: ticker 40s linear infinite;
+        }
+
+        .ticker:hover {
+            animation-play-state: paused;
+            /* Pause on hover for readability */
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+
+            /* Move half way (one full set) */
+        }
+
+        .ticker__item {
+            display: inline-flex;
+            align-items: center;
+            padding: 0 2rem;
+            font-size: 13px;
+            color: white;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .ticker__item span {
+            margin-right: 8px;
+            opacity: 0.8;
+        }
+
+        /* Centering & Zoom Animation */
+        .banner-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            padding-bottom: 30px;
+            /* Space for ticker */
+        }
+
+        #page-title {
+            animation: pulse-zoom 3s infinite ease-in-out;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes pulse-zoom {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Sidebar Collapse Logic */
+        .sidebar {
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            /* Elastic Fluidity */
+            overflow: hidden;
+            /* Prevent content spill */
+        }
+
+        .sidebar.collapsed {
+            width: 90px;
+        }
+
+        .sidebar.collapsed .logo-text,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .user-card div,
+        .sidebar.collapsed .user-card i.lucide-chevron-right {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 14px 0;
+        }
+
+        .sidebar.collapsed .logo {
+            justify-content: center;
+            padding-left: 0;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar.collapsed #sidebar-toggle {
+            margin: 0;
+            transform: rotate(180deg);
+        }
+
+        .sidebar.collapsed .user-card {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .sidebar.collapsed .user-card img {
+            margin: 0;
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Logo Icon Logic */
+        .logo-icon-collapsed {
+            display: none;
+            width: 32px;
+            height: 32px;
+            color: var(--primary);
+        }
+
+        .sidebar.collapsed .logo-icon-collapsed {
+            display: block;
+            margin-bottom: 10px;
+            animation: fadeIn 0.3s;
+        }
+
+        /* INJECTED CRITICAL STYLES FOR MATRIX & CALENDAR FIX */
+
+        /* 1. MATRIX FIX */
+        .matrix-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .matrix-sidebar {
+            width: 250px;
+            min-width: 250px;
+            border-right: 1px solid #eee;
+            padding-right: 20px;
+            flex-shrink: 0;
+            background: #fff;
+        }
+
+        .matrix-content {
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        .matrix-item {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: background 0.2s;
+            border-radius: 8px;
+            background: white;
+            margin-bottom: 5px;
+        }
+
+        /* 2. CALENDAR V2 STYLES (INLINED FOR RELIABILITY) */
+        #content-calendar .data-card {
+            background: transparent !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            border: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .calendar-strip {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 10px 5px 20px 5px;
+            margin-bottom: 20px;
+            width: 100%;
+            scrollbar-width: none;
+            mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);
+        }
+
+        .calendar-strip::-webkit-scrollbar {
+            display: none;
+        }
+
+        .calendar-day-pill {
+            min-width: 60px;
+            height: 85px;
+            background: white;
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            border: 1px solid white;
+            flex-shrink: 0;
+        }
+
+        .calendar-day-pill.active {
+            background: #1e1b4b;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(30, 27, 75, 0.3);
+            border-color: #1e1b4b;
+        }
+
+        .calendar-day-pill .day-num {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .calendar-day-pill .day-name {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+
+        /* Timeline */
+        .calendar-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            position: relative;
+        }
+
+        .calendar-timeline::before {
+            content: '';
+            position: absolute;
+            left: 55px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #f1f5f9;
+            z-index: 0;
+        }
+
+        .timeline-slot {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-time {
+            width: 55px;
+            text-align: right;
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+            padding-top: 15px;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            /* Ensure inner items stretch */
+            flex-direction: column;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 51px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .timeline-slot.active .timeline-dot {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .event-card {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            color: white;
+            padding: 15px;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
+            width: 100%;
+            min-width: 200px;
+            /* Prevent squashing */
+            box-sizing: border-box;
+            /* Critical */
+        }
+
+        .event-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .event-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Fix Mobile Matrix Hieght */
+        @media (max-width: 768px) {
+            .event-card {
+                min-width: 0;
+                /* Allow shrink on mobile if needed, but width 100% handles it */
+            }
+        }
+
+        /* MOBILE OVERRIDES */
+        @media (max-width: 767px) {
+            .matrix-layout {
+                flex-direction: column;
+            }
+
+            .matrix-sidebar {
+                width: 100%;
+                min-width: 0;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 15px;
+                padding-right: 0;
+                display: flex !important;
+                /* Force flex */
+                overflow-x: auto !important;
+                white-space: nowrap !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .matrix-item {
+                display: inline-flex;
+                min-width: 150px;
+                flex-direction: column;
+                margin-right: 10px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                white-space: normal;
+                vertical-align: top;
+                height: auto;
+                min-height: 60px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Authentication Check -->
+    <script>
+        // Verificar autenticación al cargar la página
+        (async function () {
+            // Inicializar Firebase
+            const firebaseReady = initializeFirebase ? initializeFirebase() : false;
+
+            if (firebaseReady && typeof AuthService !== 'undefined') {
+                // Verificar autenticación con Firebase
+                const authenticated = await AuthService.requireAuth();
+                if (!authenticated) {
+                    return; // requireAuth ya redirige a login
+                }
+            } else {
+                // Fallback: verificar localStorage
+                const currentUser = localStorage.getItem('currentUser');
+                if (!currentUser) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+            }
+        })();
+    </script>
+
+    <!-- PREMIUM LOADING SCREEN -->
+    <div id="loading-screen">
+        <img src="logo-academy.png" class="loader-logo" alt="Logo">
+        <div class="loader-bar-bg">
+            <div class="loader-bar-fill"></div>
+        </div>
+        <p
+            style="margin-top:20px; font-weight:600; font-size:12px; color:rgba(255,255,255,0.7); letter-spacing:1px; text-transform:uppercase;">
+            Iniciando Sistema...</p>
+    </div>
+
+
+
+    <div id="toast-container"></div>
+
+    <!-- Mobile Menu Button (Only visible on mobile) -->
+    <button class="mobile-menu-btn" id="mobile-menu-btn">
+        <i data-lucide="menu"></i>
+    </button>
+
+    <!-- Mobile Overlay (Click to close sidebar) -->
+    <div class="mobile-overlay" id="mobile-overlay"></div>
+
+    <div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo" style="position: relative;">
+                <!-- Main Logo Image (Persistent) -->
+                <img src="logo-academy.png" alt="Academia CTD"
+                    style="height: 60px; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); transition: all 0.3s;">
+
+                <button id="sidebar-toggle" class="btn-icon"
+                    style="position: absolute; right: 0; top: 0; width: 28px; height: 28px;">
+                    <i data-lucide="chevrons-left" style="width: 16px;"></i>
+                </button>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" id="view-dashboard">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" id="view-pensum">
+                    <i data-lucide="book-open"></i>
+                    <span>Gestionar Pensum</span>
+                </a>
+                <a href="#" class="nav-item" id="view-calendar">
+                    <i data-lucide="calendar"></i>
+                    <span>Calendario</span>
+                </a>
+                <a href="#" class="nav-item" id="view-attendance">
+                    <i data-lucide="clipboard-check"></i>
+                    <span>Asistencia</span>
+                </a>
+                <a href="#" class="nav-item" id="view-history">
+                    <i data-lucide="history"></i>
+                    <span>Historial</span>
+                </a>
+                <a href="#" class="nav-item" id="view-graduates">
+                    <i data-lucide="graduation-cap"></i>
+                    <span>Graduados</span>
+                </a>
+                <a href="#" class="nav-item" id="view-deliverables">
+                    <i data-lucide="layers"></i>
+                    <span>Entregas</span>
+                </a>
+                <a href="#" class="nav-item" id="view-settings">
+                    <i data-lucide="settings"></i>
+                    <span>Configuración</span>
+                </a>
+
+                <!-- Dynamic Admin Menu -->
+                <div id="admin-menu-items"
+                    style="display: none; border-top: 1px solid #f1f5f9; margin-top: 10px; padding-top: 10px;">
+                    <small
+                        style="padding-left: 18px; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px;">ADMINISTRACIÓN</small>
+
+                    <a href="#" class="nav-item" id="view-finance" style="margin-top: 5px;">
+                        <i data-lucide="dollar-sign"></i>
+                        <span>Finanzas</span>
+                    </a>
+
+                    <a href="#" class="nav-item" id="view-audit">
+                        <i data-lucide="eye"></i>
+                        <span>Auditoría</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User Profile (Read Only) -->
+            <div class="user-card">
+                <img id="sidebar-instructor-img" src="" alt="Avatar">
+                <div class="user-info">
+                    <p class="user-name" id="sidebar-instructor-name">Cargando...</p>
+                    <p class="user-role" id="sidebar-role">Instructor</p>
+                </div>
+            </div>
+
+            <button
+                onclick="if(typeof AuthService !== 'undefined') { AuthService.logout(); } else { localStorage.removeItem('currentUser'); window.location.href='login.html'; }"
+                class="btn-logout">
+                <i data-lucide="log-out"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+            <!-- Mobile Sidebar Toggle -->
+            <!-- Mobile Menu Button Removed -->
+
+            <div class="header-banner">
+                <!-- MOBILE PROFILE SWITCHER (Read Only) -->
+                <!-- Mobile Profile Removed -->
+
+                <div class="banner-content">
+                    <h1 id="page-title"
+                        style="margin-bottom:15px; display:flex; align-items:center; justify-content:center; color:white;">
+                        Dashboard
+                    </h1>
+
+                    <!-- VENEZUELA CLOCK WIDGET -->
+                    <div id="venezuela-clock" class="clock-widget">
+                        <div class="clock-time" id="clock-time">00:00:00</div>
+                        <div class="clock-date" id="clock-date">Cargando...</div>
+                    </div>
+                </div>
+
+                <!-- MOBILE CAROUSEL - ONLY VISIBLE ON PHONE -->
+                <!-- Mobile Carousel Removed -->
+
+                <!-- GOD LEVEL SCROLLING TICKER -->
+                <div class="ticker-wrap">
+                    <div class="ticker">
+                        <!-- Content duplicated for seamless loop -->
+                        <div class="ticker__item"><span>🚀</span> Control de progreso y rendimiento estudiantil.</div>
+                        <div class="ticker__item"><span>🎨</span> Impulsando el talento digital.</div>
+                        <div class="ticker__item"><span>💡</span> Creatividad sin límites.</div>
+                        <div class="ticker__item"><span>⚡</span> Innovación y diseño en un solo lugar.</div>
+                        <div class="ticker__item"><span>🎓</span> Tu futuro comienza aquí.</div>
+                        <div class="ticker__item"><span>📊</span> Gestión académica simplificada.</div>
+                        <!-- DUPLICATE -->
+                        <div class="ticker__item"><span>🚀</span> Control de progreso y rendimiento estudiantil.</div>
+                        <div class="ticker__item"><span>🎨</span> Impulsando el talento digital.</div>
+                        <div class="ticker__item"><span>💡</span> Creatividad sin límites.</div>
+                        <div class="ticker__item"><span>⚡</span> Innovación y diseño en un solo lugar.</div>
+                        <div class="ticker__item"><span>🎓</span> Tu futuro comienza aquí.</div>
+                        <div class="ticker__item"><span>📊</span> Gestión académica simplificada.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="content-dashboard" class="view-section">
+
+                <div class="actions-bar">
+                    <button class="modern-action-btn primary" id="open-register-modal">
+                        <i data-lucide="user-plus"></i>
+                        Registrar Alumno
+                    </button>
+                    <button class="modern-action-btn secondary" onclick="openAttendanceModal()">
+                        <i data-lucide="clipboard-check"></i>
+                        Tomar Asistencia
+                    </button>
+                    <button class="modern-action-btn tertiary" id="filter-today" onclick="toggleFilterToday()">
+                        <i data-lucide="calendar-days"></i>
+                        Solo Hoy
+                    </button>
+                    <button class="modern-action-btn primary" id="open-deliverables-btn"
+                        onclick="window.switchView('deliverables')">
+                        <i data-lucide="layers"></i>
+                        Ver Entregas
+                    </button>
+                </div>
+
+                <!-- Widgets y Alertas Críticas -->
+                <div id="widgets-container" class="grid-cols-3">
+                    <div id="today-agenda-widget" class="widget-card primary">
+                        <h3>
+                            <i data-lucide="calendar-check" style="width: 16px;"></i> PROGRAMADOS HOY
+                        </h3>
+                        <div id="today-agenda-list" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                    </div>
+
+                    <div id="risk-dashboard-widget" class="widget-card danger">
+                        <h3>
+                            <i data-lucide="alert-triangle" style="width: 16px;"></i> ESTUDIANTES EN RIESGO
+                        </h3>
+                        <div id="risk-students-list" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                    </div>
+
+                    <div id="critical-points-widget" class="widget-card warning">
+                        <h3>
+                            <i data-lucide="brain" style="width: 16px;"></i> PUNTOS CRÍTICOS
+                        </h3>
+                        <div id="critical-points-list" style="font-size: 12px; font-weight: 600;"></div>
+                    </div>
+                </div>
+
+                <!-- Alertas de Estancamiento -->
+                <!-- Alertas de Estancamiento (Congelados) -->
+                <div id="stagnant-alerts" class="widget-card stagnant" style="display: none; margin-bottom: 25px;">
+                    <h3>
+                        <i data-lucide="snowflake" style="width: 16px;"></i> ALUMNOS CONGELADOS (+3 clases)
+                    </h3>
+                    <div id="stagnant-list" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <!-- JS renders content -->
+                    </div>
+                </div>
+
+                <!-- Estadísticas Principales -->
+                <div class="stats-grid" style="margin-bottom: 25px;">
+                    <div class="stat-card">
+                        <span class="label">Alumnos Activos</span>
+                        <span class="value" id="stat-total-students">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Progreso General</span>
+                        <span class="value" id="stat-avg-progress">0%</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Módulo Principal</span>
+                        <span class="value" id="stat-active-module">-</span>
+                    </div>
+                </div>
+
+                <!-- Distribución por Módulo y Tendencia -->
+                <div id="dashboard-charts" class="grid-cols-2">
+                    <div class="data-card">
+                        <div class="card-header">
+                            <h2 style="font-size: 16px;">Distribución por Módulo</h2>
+                        </div>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="moduleChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="data-card">
+                        <div class="card-header">
+                            <h2 style="font-size: 16px;">Tendencia de Asistencia (Últ. 7 días)</h2>
+                        </div>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="attendanceTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grilla de Ocupación Semanal -->
+                <div class="data-card" style="margin-bottom: 25px;">
+                    <div class="card-header">
+                        <div>
+                            <h2 style="font-size: 18px;">Disponibilidad de Horarios</h2>
+                            <small style="color: var(--text-muted);">Capacidad Máxima: 10 alumnos por turno</small>
+                        </div>
+                        <div id="quick-filters-container" style="display: flex; gap: 8px;">
+                            <button class="btn" style="padding: 6px 12px; font-size: 12px; background: #eee;"
+                                onclick="filterBySchedule('all')">Ver Todos</button>
+                        </div>
+                    </div>
+                    <div id="schedule-capacity-container" style="overflow-x: auto;"></div>
+                </div>
+
+                <!-- Lista de Alumnos Principal -->
+                <div class="data-card">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+                        <h2>Lista de Alumnos</h2>
+                        <div style="display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap;">
+                            <div class="search-box" style="margin:0; width: auto; min-width: 250px;">
+                                <i data-lucide="search" style="color: var(--text-muted); width: 18px;"></i>
+                                <input type="text" id="search-student" placeholder="Buscar alumno...">
+                            </div>
+                            <select id="filter-module"
+                                style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                                <option value="all">Todos los módulos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Modern Cards Grid -->
+                    <div id="students-cards-container" class="student-cards-grid">
+                        <!-- Cards will be injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Attendance View -->
+            <div id="content-attendance" class="view-section" style="display: none;">
+                <div class="view-header">
+                    <div>
+                        <h1>Cuaderno de Asistencias</h1>
+                        <p style="font-size: 13px; color: var(--text-muted);">Seguimiento detallado y análisis de
+                            permanencia.</p>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label style="font-size: 15px; font-weight: 700; color:#1e293b;">Fecha:</label>
+                            <input type="date" id="attendance-date" class="form-control" onchange="renderAttendance()">
+                        </div>
+                        <button class="btn-mark-all" onclick="markAllPresent()">
+                            <i data-lucide="check-circle" style="width:18px;"></i> Marcar Todos "Presente"
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Eduka Stats Grid -->
+                <div class="eduka-stats-grid">
+                    <div class="stat-card-eduka bg-green" onclick="window.setAttendanceFilter('all')"
+                        style="cursor: pointer; transition: all 0.3s ease;">
+                        <h3>Total Estudiantes</h3>
+                        <span class="value" id="att-stats-total">0</span>
+                        <span class="sub-text">Inscritos este mes</span>
+                        <i data-lucide="users" class="icon-bg"></i>
+                    </div>
+                    <div class="stat-card-eduka bg-blue" onclick="window.setAttendanceFilter('present')"
+                        style="cursor: pointer; transition: all 0.3s ease;">
+                        <h3>Presentes Hoy</h3>
+                        <span class="value" id="att-stats-present">0</span>
+                        <span class="sub-text">Asistencia Regular</span>
+                        <i data-lucide="user-check" class="icon-bg"></i>
+                    </div>
+                    <div class="stat-card-eduka bg-purple-deep" onclick="window.setAttendanceFilter('all')"
+                        style="cursor: pointer; transition: all 0.3s ease;">
+                        <h3>Eventos</h3>
+                        <span class="value" id="att-stats-events">0</span>
+                        <span class="sub-text">Clases Programadas</span>
+                        <i data-lucide="calendar" class="icon-bg"></i>
+                    </div>
+                    <div class="stat-card-eduka bg-orange-deep" onclick="window.setAttendanceFilter('risk')"
+                        style="cursor: pointer; transition: all 0.3s ease;">
+                        <h3>Alertas</h3>
+                        <span class="value" id="att-stats-risk">0</span>
+                        <span class="sub-text">Requieren Atención</span>
+                        <i data-lucide="alert-triangle" class="icon-bg"></i>
+                    </div>
+                </div>
+
+                <!-- Clean List Section -->
+                <div class="attendance-list-header">
+                    <h2>Participación de Estudiantes</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" style="background: white; border: 1px solid #e2e8f0; color: #64748b;"
+                            onclick="window.generateWeeklyAttendanceReport()">
+                            <i data-lucide="file-spreadsheet" style="width:16px; margin-right:8px;"></i>
+                            Reporte Semanal (Excel)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MODERN CARD LIST CONTAINER -->
+                <div id="attendance-list-container" class="attendance-card-list">
+                    <!-- Cards will be injected here by JS -->
+                </div>
+            </div>
+
+            <!-- Pensum View -->
+            <div id="content-pensum" class="view-section" style="display: none;">
+                <div class="pensum-header">
+                    <div>
+                        <h1>Gestionar Pensum</h1>
+                        <p>Explora los módulos y temarios de cada especialidad</p>
+                    </div>
+                    <div class="pensum-filters" id="pensum-filters-container">
+                        <!-- Dynamic Filters will be injected here -->
+                    </div>
+                </div>
+                <div id="pensum-grid-container" class="pensum-grid">
+                    <!-- JS will render module cards here -->
+                </div>
+            </div>
+
+            <div id="content-calendar" class="view-section" style="display: none;">
+                <div class="data-card">
+                    <div class="card-header"
+                        style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 id="current-month">Cargando...</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-icon" onclick="changeCalendarMonth(-1)"><i
+                                    data-lucide="chevron-left"></i></button>
+                            <button class="btn-icon" onclick="changeCalendarMonth(1)"><i
+                                    data-lucide="chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div id="calendar-grid"></div>
+                </div>
+            </div>
+
+            <!-- Deliverables View -->
+            <div id="content-deliverables" class="view-section" style="display: none;">
+                <div class="data-card">
+                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h2>Control de Entregas por Módulo</h2>
+                            <p style="font-size:12px; color:var(--text-muted);">Vista global de avance práctico.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModuleDeliverablesManager()"
+                            style="display:flex; align-items:center; gap:8px;">
+                            <i data-lucide="list-checks" style="width:16px;"></i>
+                            Gestionar Entregables de Módulos
+                        </button>
+                    </div>
+                    <div id="deliverables-container">
+                        <!-- JS renders tables here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graduates View -->
+            <div id="content-graduates" class="view-section" style="display: none;">
+                <div class="view-header" style="margin-bottom: 25px;">
+                    <h1
+                        style="color:#1e293b; font-weight:800; font-size:24px; display:flex; align-items:center; gap:10px;">
+                        <i data-lucide="award" style="color:#f59e0b;"></i> Cuadro de Honor
+                    </h1>
+                    <p style="color:#64748b; font-size:14px;">Alumnos que han completado exitosamente su formación en la
+                        academia.</p>
+                </div>
+
+                <div class="data-card">
+                    <div style="padding: 20px; overflow-x: auto;">
+                        <table style="width:100%; min-width:800px;">
+                            <thead>
+                                <tr style="text-align:left; border-bottom:2px solid #f1f5f9;">
+                                    <th style="padding:12px;">Alumno</th>
+                                    <th>Especialidad Finalizada</th>
+                                    <th>Fecha de Grado</th>
+                                    <th style="text-align:right;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="graduates-table-body">
+                                <!-- JS fills this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History View -->
+            <div id="content-history" class="view-section" style="display: none;">
+                <div class="data-card">
+                    <div class="card-header">
+                        <h2>Módulos Completados</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Alumno</th>
+                                <th>Módulo</th>
+                                <th>Fecha de Graduación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADMIN: FINANCE & REPORTS -->
+            <div id="content-finance" class="view-section" style="display: none;">
+                <div class="stats-grid" style="margin-bottom: 25px;">
+                    <div class="stat-card">
+                        <span class="label">Ingresos del Mes</span>
+                        <span class="value" id="fin-month-income">$0</span>
+                        <small style="font-size:10px; color:var(--text-muted);">Facturado este mes</small>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Pagos Pendientes</span>
+                        <span class="value" style="color:var(--danger);" id="fin-pending-count">0</span>
+                        <small style="font-size:10px; color:var(--text-muted);">Alumnos morosos</small>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Total Alumnos</span>
+                        <span class="value" id="fin-total-students">0</span>
+                        <small style="font-size:10px; color:var(--text-muted);">Activos en el sistema</small>
+                    </div>
+                </div>
+
+                <!-- BI CHARTS -->
+                <div class="grid-cols-2">
+                    <div class="data-card">
+                        <div class="card-header">
+                            <h2 style="font-size:16px;">Comparativa de Alumnos</h2>
+                        </div>
+                        <div style="height:250px; position:relative;">
+                            <canvas id="admin-comparison-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="data-card">
+                        <div class="card-header">
+                            <h2 style="font-size:16px;">Ingresos Estimados</h2>
+                        </div>
+                        <div style="height:250px; position:relative;">
+                            <canvas id="admin-income-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <div class="card-header" style="justify-content: space-between;">
+                        <h2>Control de Pagos</h2>
+                        <button class="btn btn-primary" onclick="openPaymentModal()"
+                            style="font-size: 12px; padding: 8px 16px;">
+                            Registrar Pago
+                        </button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Alumno</th>
+                                <th>Plan / Mensualidad</th>
+                                <th>Estado Mes Actual</th>
+                                <th>Último Pago</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="finance-table-body">
+                            <!-- populated by js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+
+            <!-- ADMIN: AUDIT LOG -->
+            <div id="content-audit" class="view-section" style="display: none;">
+                <div class="data-card">
+                    <div class="card-header">
+                        <h2>Bitácora de Auditoría</h2>
+                        <span style="font-size:12px; color:var(--text-muted);">Registro de acciones críticas del
+                            sistema</span>
+                    </div>
+                    <table style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-log-body">
+                            <!-- populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Configuration View (Redesign) -->
+            <div id="content-settings" class="view-section" style="display: none;">
+                <div class="view-header" style="margin-bottom: 30px;">
+                    <h1 style="color:#1e293b; font-weight:800; font-size:28px;">Configuración</h1>
+                    <p style="color:#64748b; font-size:14px; margin:0;">Personaliza tu experiencia y asegura tus datos.
+                    </p>
+                </div>
+
+                <div class="config-grid" style="width: 100%;">
+                    <!-- 1. ACADEMIA -->
+                    <div class="config-card interactive">
+                        <div class="config-icon"><i data-lucide="building-2"></i></div>
+                        <div class="config-label">Academia</div>
+                        <div class="config-subtext">Nombre Institución</div>
+                        <input type="text" id="sett-academy-name" class="config-input" placeholder="Nombre...">
+                    </div>
+
+                    <!-- 2. INSTRUCTOR -->
+                    <div class="config-card interactive">
+                        <div class="config-icon"><i data-lucide="user"></i></div>
+                        <div class="config-label">Instructor</div>
+                        <div class="config-subtext">Tu Nombre</div>
+                        <input type="text" id="sett-instructor-name" class="config-input" placeholder="Instructor...">
+                    </div>
+
+                    <!-- 3. AVATAR URL -->
+                    <div class="config-card interactive">
+                        <div class="config-icon"><i data-lucide="image"></i></div>
+                        <div class="config-label">Avatar</div>
+                        <div class="config-subtext">URL de Imagen</div>
+                        <input type="text" id="sett-instructor-avatar" class="config-input" placeholder="https://...">
+                    </div>
+
+                    <!-- 4. CAPACIDAD -->
+                    <div class="config-card interactive">
+                        <div class="config-icon"><i data-lucide="users"></i></div>
+                        <div class="config-label">Capacidad</div>
+                        <div class="config-subtext">Max. por Turno</div>
+                        <input type="number" id="sett-max-capacity" class="config-input" placeholder="10">
+                    </div>
+
+                    <!-- 5. RIESGO (Limit %) -->
+                    <div class="config-card interactive">
+                        <div class="config-icon" style="color:#f59e0b;"><i data-lucide="alert-triangle"></i></div>
+                        <div class="config-label">Límite Riesgo</div>
+                        <div class="config-subtext">Alerta de % (Asistencia)</div>
+                        <input type="number" id="sett-risk-percent" class="config-input" placeholder="75">
+                    </div>
+
+                    <!-- 6. RISK ABSENCES (NEW) -->
+                    <div class="config-card interactive">
+                        <div class="config-icon" style="color:#ef4444;"><i data-lucide="user-x"></i></div>
+                        <div class="config-label">Límite Faltas</div>
+                        <div class="config-subtext">Max. consecutivas</div>
+                        <input type="number" id="sett-risk-absences" class="config-input" placeholder="2">
+                    </div>
+
+                    <!-- 7. BACKUP (Download) -->
+                    <div class="config-card interactive" onclick="downloadBackup()">
+                        <div class="config-icon" style="color:#10b981;"><i data-lucide="download"></i></div>
+                        <div class="config-label">Respaldo</div>
+                        <div class="config-subtext">Descargar JSON</div>
+                    </div>
+
+                    <!-- 8. RESTORE (Upload) -->
+                    <div class="config-card interactive" onclick="document.getElementById('backup-file').click()">
+                        <div class="config-icon" style="color:#3b82f6;"><i data-lucide="upload"></i></div>
+                        <div class="config-label">Restaurar</div>
+                        <div class="config-subtext">Cargar JSON</div>
+                        <input type="file" id="backup-file" accept=".json" style="display: none;"
+                            onchange="restoreBackup(this)">
+                    </div>
+
+                    <!-- 9. REPORTES (EXCEL) -->
+                    <div class="config-card interactive" onclick="exportToExcel()">
+                        <div class="config-icon" style="color:#166534;"><i data-lucide="file-spreadsheet"></i></div>
+                        <div class="config-label">Reportes</div>
+                        <div class="config-subtext">Exportar Excel</div>
+                    </div>
+
+                    <!-- 10. FACTORY RESET -->
+                    <div class="config-card interactive" onclick="factoryReset()"
+                        style="border-color: #fee2e2; background: #fff1f2;">
+                        <div class="config-icon" style="color:#ef4444;"><i data-lucide="trash-2"></i></div>
+                        <div class="config-label" style="color:#ef4444;">Reiniciar Todo</div>
+                        <div class="config-subtext">Borrar Base de Datos</div>
+                    </div>
+                </div>
+
+                <!-- Footer Save Button -->
+                <div style="margin-top: 30px; display:flex; justify-content:center; margin-bottom: 50px;">
+                    <button class="btn btn-primary" onclick="saveSettings()"
+                        style="padding: 15px 40px; font-size: 16px; border-radius: 50px; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);">
+                        <i data-lucide="save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+    </div>
+
+
+    <!-- SECTION: MATRIX (God Mode) -->
+    <div id="content-matrix" class="view-section" style="display: none;">
+        <div class="data-card">
+            <div class="card-header">
+                <h2>Gestión de Módulos (Global)</h2>
+                <p style="font-size:12px; color:var(--text-muted);">Edita el plan de estudios de todas las
+                    carreras.</p>
+            </div>
+
+            <div style="display:flex; gap: 20px; align-items: flex-start;">
+                <!-- Sidebar for Specialties -->
+                <div style="width: 250px; border-right: 1px solid #eee; padding-right: 20px;"
+                    id="matrix-specialty-list">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Editor Area -->
+                <div style="flex-grow: 1;" id="matrix-editor-area">
+                    <div style="text-align: center; color: #999; padding: 40px;">
+                        Selecciona una especialidad para editar sus módulos.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </main>
+    </div>
+
+
+
+    <!-- Modal -->
+    <div class="modal" id="register-modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div
+                        style="background:var(--primary); color:white; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="user-plus"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin:0; font-size:18px;">Nuevo Alumno</h2>
+                        <p style="margin:0; font-size:11px; color:var(--text-muted);">Completa los datos para inscribir
+                            al estudiante.</p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="student-form">
+                <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="user" style="width:14px;"></i> Nombre Completo
+                        </label>
+                        <input type="text" id="reg-name" placeholder="Ej. Carlos Pérez" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="credit-card" style="width:14px;"></i> Documento de Identidad
+                        </label>
+                        <input type="text" id="reg-dni" placeholder="Ej. V-12345678" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="users" style="width:14px;"></i> Género (Para Avatar)
+                        </label>
+                        <select id="reg-gender"
+                            style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 13px;">
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="form-group">
+
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                                <i data-lucide="book-open" style="width:14px;"></i> Carrera / Especialidad
+                            </label>
+                            <select id="reg-specialty" required
+                                style="background:white; color:var(--text-main); pointer-events:auto; cursor:pointer;">
+                                <option value="Diseño Gráfico">Especialidad Diseño Gráfico</option>
+                                <option value="Diseño para Redes Sociales" style="color:#e67e22; font-weight:bold;">
+                                    Especialidad en Redes Sociales</option>
+                                <option value="Diseño Web">Desarrollo Web (Multimedia)</option>
+                                <option value="Edición de Video">Edición de Video (CapCut)</option>
+                                <option value="Ingeniería de Prompts" style="color:#8b5cf6; font-weight:bold;">
+                                    Ingeniería de Prompts (IA)</option>
+                                <option value="Creación de Assets con IA" style="color:#8b5cf6; font-weight:bold;">
+                                    Creación Assets IA</option>
+                                <option value="Marketing General" style="color:#ef4444; font-weight:bold;">Marketing
+                                    Digital (General)</option>
+                                <option value="Publicidad Digital" style="color:#ef4444; font-weight:bold;">Trafficker
+                                    Digital (Ads)</option>
+                                <option value="Excel Básico" style="color:#16a34a; font-weight:bold;">Excel Básico
+                                </option>
+                                <option value="Excel Intermedio" style="color:#16a34a; font-weight:bold;">Excel
+                                    Intermedio</option>
+                                <option value="Excel Avanzado" style="color:#16a34a; font-weight:bold;">Excel Avanzado
+                                    (Macros)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                                <i data-lucide="clock" style="width:14px;"></i> Horario (Turnos)
+                            </label>
+                            <div class="day-chips" id="reg-schedule-container">
+                                <label class="day-chip" data-time="9AM - 11AM"><input type="checkbox"
+                                        value="9AM - 11AM"><span class="chip-label">9:00 - 11:00</span></label>
+                                <label class="day-chip" data-time="9AM - 12PM"><input type="checkbox"
+                                        value="9AM - 12PM"><span class="chip-label">9:00 - 12:00 (VS)</span></label>
+                                <label class="day-chip" data-time="11AM - 1PM"><input type="checkbox"
+                                        value="11AM - 1PM"><span class="chip-label">11:00 - 1:00</span></label>
+                                <label class="day-chip" data-time="2PM - 3:30PM"><input type="checkbox"
+                                        value="2PM - 3:30PM"><span class="chip-label">2:00 - 3:30</span></label>
+                                <label class="day-chip" data-time="3:30PM - 5PM"><input type="checkbox"
+                                        value="3:30PM - 5PM"><span class="chip-label">3:30 - 5:00</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="calendar-check" style="width:14px;"></i> Días de Asistencia
+                        </label>
+                        <div class="day-chips" id="reg-days-container">
+                            <label class="day-chip"><input type="checkbox" value="Lun"><span
+                                    class="chip-label">Lun</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Mar"><span
+                                    class="chip-label">Mar</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Mié"><span
+                                    class="chip-label">Mié</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Jue"><span
+                                    class="chip-label">Jue</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Vie"><span
+                                    class="chip-label">Vie</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Sáb"><span
+                                    class="chip-label">Sáb</span></label>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                                <i data-lucide="phone" style="width:14px;"></i> WhatsApp
+                            </label>
+                            <input type="text" id="reg-phone" placeholder="+58...">
+                        </div>
+                        <div class="form-group">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                                <i data-lucide="link" style="width:14px;"></i> Portafolio
+                            </label>
+                            <input type="url" id="reg-portfolio" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn" id="close-modal"
+                        style="background:#f1f5f9; color:#64748b; font-weight:700;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="padding:10px 25px;">Registrar Alumno</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shift Details Modal -->
+    <div class="modal" id="shift-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shift-modal-title">Alumnos en este Turno</h2>
+            </div>
+            <div class="modal-body">
+                <div id="shift-modal-list"
+                    style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                    <!-- JS will render student names here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeShiftModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Details Modal -->
+    <div class="modal" id="details-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div id="details-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <!-- JS will render details here within modal-header and modal-body -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Report Card Modal -->
+    <div class="modal" id="report-modal">
+        <div class="modal-content"
+            style="max-width: 500px; padding: 0; overflow: hidden; border: 4px solid var(--primary);">
+            <div style="background: var(--primary); color: white; padding: 30px; text-align: center;">
+                <h1 style="color: white; margin-bottom: 5px;">REPORTE DE PROGRESO</h1>
+                <p style="font-size: 14px; opacity: 0.9;">Academia de Diseño Gráfico</p>
+            </div>
+            <div id="report-card-body" style="padding: 30px; background: white; flex: 1; overflow-y: auto;">
+                <!-- JS will fill this -->
+            </div>
+            <div style="padding: 20px; background: #f8f9fa; text-align: center; display: flex; gap: 10px;">
+                <button class="btn" style="flex:1; background:#eee;"
+                    onclick="document.getElementById('report-modal').classList.remove('active')">Cerrar</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="window.print()">Imprimir / PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Attendance Modal -->
+    <div class="modal" id="attendance-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div
+                        style="background:#fff7ed; color:#ea580c; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="clipboard-list"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin:0; font-size:18px;">Pase de Lista</h2>
+                        <p style="margin:0; font-size:11px; color:var(--text-muted);"><span
+                                id="attendance-date-display"></span>
+                            • <span id="attendance-count">0</span> Alumnos hoy</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <div id="attendance-list-container"
+                    style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                    <!-- JS renders students here -->
+                </div>
+                <div id="attendance-empty-state" style="display:none; text-align:center; padding:30px; color:#999;">
+                    <i data-lucide="coffee" style="width:40px; margin-bottom:10px; opacity:0.5;"></i>
+                    <p style="font-size:13px;">No hay alumnos programados para hoy.</p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary" style="width:100%;" onclick="closeAttendanceModal()">Finalizar y
+                    Guardar</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Gallery Modal -->
+    <div class="modal" id="gallery-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2 style="margin:0; font-size:18px;">Portafolio de Trabajos</h2>
+                    <p style="margin:0; font-size:11px; color:var(--text-muted);">Galería de proyectos realizados</p>
+                </div>
+                <button onclick="addGalleryImage()" class="btn btn-primary" style="padding: 8px 15px; font-size: 12px;">
+                    <i data-lucide="upload-cloud"></i> Subir Trabajo
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="gallery-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; max-height: 500px; overflow-y: auto;">
+                    <!-- JS renders images here -->
+                </div>
+                <div id="gallery-empty-state"
+                    style="display:none; text-align:center; padding:50px; color:#ccc; flex-direction:column; align-items:center;">
+                    <i data-lucide="image" style="width:48px; height:48px; margin-bottom:15px; opacity:0.3;"></i>
+                    <p style="font-size:14px;">Aún no hay trabajos en la galería.</p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn" style="background:#eee; width:100%;" onclick="closeGalleryModal()">Cerrar
+                    Galería</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <form id="edit-form" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="modal-header">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div
+                            style="background:var(--primary); color:white; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                            <i data-lucide="user-cog"></i>
+                        </div>
+                        <div>
+                            <h2 style="margin:0; font-size:18px;">Editar Alumno</h2>
+                            <p style="margin:0; font-size:11px; color:var(--text-muted);">Modifica los datos y horario
+                                del estudiante.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="edit-index">
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="user" style="width:14px;"></i> Nombre Completo
+                        </label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="credit-card" style="width:14px;"></i> Documento de Identidad
+                        </label>
+                        <input type="text" id="edit-dni" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="users" style="width:14px;"></i> Género
+                        </label>
+                        <select id="edit-gender"
+                            style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 13px;">
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="clock" style="width:14px;"></i> Horarios (Turnos)
+                        </label>
+                        <div class="day-chips" id="edit-schedule-container">
+                            <label class="day-chip" data-time="9AM - 11AM"><input type="checkbox"
+                                    value="9AM - 11AM"><span class="chip-label">9:00 - 11:00</span></label>
+                            <label class="day-chip" data-time="9AM - 12PM"><input type="checkbox"
+                                    value="9AM - 12PM"><span class="chip-label">9:00 - 12:00 (VS)</span></label>
+                            <label class="day-chip" data-time="11AM - 1PM"><input type="checkbox"
+                                    value="11AM - 1PM"><span class="chip-label">11:00 - 1:00</span></label>
+                            <label class="day-chip" data-time="2PM - 3:30PM"><input type="checkbox"
+                                    value="2PM - 3:30PM"><span class="chip-label">2:00 - 3:30</span></label>
+                            <label class="day-chip" data-time="3:30PM - 5PM"><input type="checkbox"
+                                    value="3:30PM - 5PM"><span class="chip-label">3:30 - 5:00</span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                            <i data-lucide="calendar-check" style="width:14px;"></i> Días de Asistencia
+                        </label>
+                        <div class="day-chips" id="edit-days-container">
+                            <label class="day-chip"><input type="checkbox" value="Lun"><span
+                                    class="chip-label">Lun</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Mar"><span
+                                    class="chip-label">Mar</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Mié"><span
+                                    class="chip-label">Mié</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Jue"><span
+                                    class="chip-label">Jue</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Vie"><span
+                                    class="chip-label">Vie</span></label>
+                            <label class="day-chip"><input type="checkbox" value="Sáb"><span
+                                    class="chip-label">Sáb</span></label>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                                <i data-lucide="phone" style="width:14px;"></i> WhatsApp
+                            </label>
+                            <input type="text" id="edit-phone">
+                        </div>
+                        <div class="form-group">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#555;">
+                                <i data-lucide="link" style="width:14px;"></i> Link de Portafolio
+                            </label>
+                            <input type="url" id="edit-portfolio">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="display: flex; gap: 10px;">
+                    <button type="button" class="btn" onclick="closeEditModal()"
+                        style="flex:1; background:#eee;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="payment-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div
+                        style="background:var(--success); color:white; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="dollar-sign"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin:0; font-size:18px;">Registrar Pago</h2>
+                        <p style="margin:0; font-size:11px; color:var(--text-muted);">Ingresa los detalles del pago
+                            recibido.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form id="payment-form">
+                    <div class="form-group">
+                        <label>Seleccionar Alumno</label>
+                        <select id="pay-student-id" required
+                            style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                            <option value="">Buscar alumno...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto ($)</label>
+                        <input type="number" id="pay-amount" required placeholder="Ej. 100"
+                            style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                    </div>
+                    <div class="form-group">
+                        <select id="pay-concept" required
+                            style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                            <option value="Inscripción">Inscripción</option>
+                            <option value="Mensualidad">Mensualidad (General)</option>
+                            <option value="Enero 2026">Enero 2026</option>
+                            <option value="Febrero 2026">Febrero 2026</option>
+                            <option value="Marzo 2026">Marzo 2026</option>
+                            <option value="Abril 2026">Abril 2026</option>
+                            <option value="Mayo 2026">Mayo 2026</option>
+                            <option value="Junio 2026">Junio 2026</option>
+                            <option value="Julio 2026">Julio 2026</option>
+                            <option value="Agosto 2026">Agosto 2026</option>
+                            <option value="Septiembre 2026">Septiembre 2026</option>
+                            <option value="Octubre 2026">Octubre 2026</option>
+                            <option value="Noviembre 2026">Noviembre 2026</option>
+                            <option value="Diciembre 2026">Diciembre 2026</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Pago</label>
+                        <input type="date" id="pay-date" required
+                            style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                    </div>
+                    <div class="form-group">
+                        <label>Método de Pago</label>
+                        <select id="pay-method" required
+                            style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer"
+                        style="padding-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" class="btn" style="background:#eee;"
+                            onclick="closePaymentModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Registrar Pago</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Topic Editor Modal -->
+    <div class="modal" id="topic-editor-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Editar Temario</h2>
+                <button class="btn-icon" onclick="closeTopicEditor()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="topic-editor-subtitle" style="margin-bottom: 15px; color: var(--text-muted);">Editando temario...
+                </p>
+                <input type="hidden" id="topic-editor-module-name">
+                <div class="form-group">
+                    <label>Lista de Temas (Uno por línea)</label>
+                    <textarea id="topic-editor-textarea"
+                        style="width: 100%; height: 300px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 13px; line-height: 1.6; resize: vertical;"
+                        placeholder="Tema 1&#10;Tema 2&#10;Tema 3..."></textarea>
+                    <small style="color: var(--text-muted);">Cada línea se guardará como un tema independiente.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeTopicEditor()" style="background: #eee;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveTopicEditorChanges()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Deliverables Modal -->
+    <div class="modal" id="edit-deliverables-modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div
+                        style="background:linear-gradient(135deg, #6366f1, #4f46e5); color:white; width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="clipboard-check" style="width:20px;"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin:0; font-size:18px;">Editar Entregas</h2>
+                        <p id="edit-deliverables-student-name"
+                            style="margin:0; font-size:12px; color:var(--text-muted);"></p>
+                    </div>
+                </div>
+                <button class="btn-icon" onclick="closeEditDeliverablesModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-deliverables-student-index">
+
+                <div
+                    style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:20px; border:1px solid #e2e8f0;">
+                    <div
+                        style="font-size:11px; text-transform:uppercase; font-weight:800; color:#64748b; margin-bottom:4px; letter-spacing:0.5px;">
+                        MÓDULO ACTUAL</div>
+                    <div id="edit-deliverables-module-name" style="font-size:14px; font-weight:700; color:#1e293b;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label
+                        style="font-size:13px; font-weight:600; color:#475569; margin-bottom:12px; display:block;">Entregables
+                        del Módulo</label>
+                    <div id="edit-deliverables-checkboxes" style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Checkboxes will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Custom Deliverables Section -->
+                <div class="form-group" style="margin-top:20px; padding-top:20px; border-top:1px solid #e2e8f0;">
+                    <label
+                        style="font-size:13px; font-weight:600; color:#475569; margin-bottom:8px; display:flex; align-items:center;">
+                        <i data-lucide="plus-circle" style="width:14px; margin-right:4px;"></i>
+                        Agregar Entregable Personalizado
+                    </label>
+                    <div style="display:flex; gap:8px; margin-bottom:12px;">
+                        <input type="text" id="custom-deliverable-input" placeholder="Ej: Diseño de Portada Especial"
+                            style="flex:1; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px;">
+                        <button class="btn btn-primary" onclick="addCustomDeliverable()" type="button"
+                            style="padding:10px 16px; white-space:nowrap;">
+                            <i data-lucide="plus" style="width:14px; margin-right:4px;"></i>
+                            Agregar
+                        </button>
+                    </div>
+                    <div id="custom-deliverables-list" style="display:flex; flex-direction:column; gap:8px;">
+                        <!-- Custom deliverables will appear here -->
+                    </div>
+                </div>
+
+                <div id="edit-deliverables-empty" style="display:none; text-align:center; padding:30px; color:#94a3b8;">
+                    <i data-lucide="inbox" style="width:40px; height:40px; margin-bottom:10px; opacity:0.3;"></i>
+                    <p style="font-size:13px;">No hay entregables definidos para este módulo.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEditDeliverablesModal()" style="background: #eee;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveDeliverablesChanges()">
+                    <i data-lucide="save" style="width:16px; margin-right:6px;"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Deliverables Manager Modal -->
+    <div class="modal" id="module-deliverables-manager-modal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div
+                        style="background:linear-gradient(135deg, #8b5cf6, #6366f1); color:white; width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="list-checks" style="width:20px;"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin:0; font-size:18px;">Gestionar Entregables del Módulo</h2>
+                        <p style="margin:0; font-size:12px; color:var(--text-muted);">Edita la lista maestra de
+                            entregables</p>
+                    </div>
+                </div>
+                <button class="btn-icon" onclick="closeModuleDeliverablesManager()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label
+                        style="font-size:13px; font-weight:600; color:#475569; margin-bottom:8px; display:block;">Seleccionar
+                        Módulo</label>
+                    <select id="module-deliverables-select" onchange="loadModuleDeliverables()"
+                        style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px;">
+                        <option value="">-- Selecciona un módulo --</option>
+                    </select>
+                </div>
+
+                <div id="module-deliverables-editor" style="display:none;">
+                    <div class="form-group" style="margin-top:20px;">
+                        <label
+                            style="font-size:13px; font-weight:600; color:#475569; margin-bottom:8px; display:block;">
+                            Entregables del Módulo (uno por línea)
+                        </label>
+                        <textarea id="module-deliverables-textarea" rows="10"
+                            placeholder="Entregable 1&#10;Entregable 2&#10;Entregable 3..."
+                            style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-family: inherit; resize: vertical;"></textarea>
+                        <small style="color:var(--text-muted); font-size:12px;">
+                            <i data-lucide="alert-circle" style="width:12px; vertical-align:middle;"></i>
+                            Cada línea se convierte en un entregable. Estos afectarán a TODOS los estudiantes del
+                            módulo.
+                        </small>
+                    </div>
+                </div>
+
+                <div id="module-deliverables-empty" style="text-align:center; padding:40px; color:#94a3b8;">
+                    <i data-lucide="inbox" style="width:48px; height:48px; margin-bottom:12px; opacity:0.2;"></i>
+                    <p style="font-size:13px;">Selecciona un módulo para gestionar sus entregables</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModuleDeliverablesManager()"
+                    style="background: #eee;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveModuleDeliverables()">
+                    <i data-lucide="save" style="width:16px; margin-right:6px;"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="department-modal">
+        <div class="modal-content" style="max-width: 400px; text-align:center;">
+            <div class="modal-header" style="justify-content:center; border-bottom:none; padding-bottom:0;">
+                <h2 style="font-size:18px;">Seleccionar Departamento</h2>
+            </div>
+            <div class="modal-body" style="padding-top:10px;">
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Elige el área de la academia que
+                    deseas gestionar.</p>
+                <div style="display:grid; gap:10px;">
+                    <button class="btn" onclick="switchDepartment('design')"
+                        style="justify-content:center; padding:15px; background:#fff; border:1px solid #e2e8f0; color:var(--text-main); font-weight:600; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div
+                                style="width:30px; height:30px; background:#f0fdf4; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#166534;">
+                                <i data-lucide="pen-tool" style="width:16px;"></i>
+                            </div>
+                            Diseño Gráfico
+                        </div>
+                    </button>
+                    <button class="btn" onclick="switchDepartment('multimedia')"
+                        style="justify-content:center; padding:15px; background:#fff; border:1px solid #e2e8f0; color:var(--text-main); font-weight:600; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div
+                                style="width:30px; height:30px; background:#f0f9ff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#0369a1;">
+                                <i data-lucide="monitor-play" style="width:16px;"></i>
+                            </div>
+                            Web & Video
+                        </div>
+                    </button>
+                    <button class="btn" onclick="switchDepartment('ai')"
+                        style="justify-content:center; padding:15px; background:#fff; border:1px solid #e2e8f0; color:var(--text-main); font-weight:600; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div
+                                style="width:30px; height:30px; background:#f5f3ff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#7c3aed;">
+                                <i data-lucide="brain-circuit" style="width:16px;"></i>
+                            </div>
+                            Inteligencia Artificial
+                        </div>
+                    </button>
+                    <button class="btn" onclick="switchDepartment('marketing')"
+                        style="justify-content:center; padding:15px; background:#fff; border:1px solid #e2e8f0; color:var(--text-main); font-weight:600; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div
+                                style="width:30px; height:30px; background:#fef2f2; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#ef4444;">
+                                <i data-lucide="megaphone" style="width:16px;"></i>
+                            </div>
+                            Marketing Digital
+                        </div>
+                    </button>
+                    <button class="btn" onclick="switchDepartment('excel')"
+                        style="justify-content:center; padding:15px; background:#fff; border:1px solid #e2e8f0; color:var(--text-main); font-weight:600; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div
+                                style="width:30px; height:30px; background:#f0fdf4; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#16a34a;">
+                                <i data-lucide="sheet" style="width:16px;"></i>
+                            </div>
+                            Excel Empresarial
+                        </div>
+                    </button>
+                    <button class="btn" onclick="switchDepartment('admin')"
+                        style="justify-content:center; padding:15px; background:#fff; border:1px solid #e2e8f0; color:var(--text-main); font-weight:600; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div
+                                style="width:30px; height:30px; background:#fefce8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#854d0e;">
+                                <i data-lucide="shield-alert" style="width:16px;"></i>
+                            </div>
+                            Dirección (Admin)
+                        </div>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content:center; padding-top:10px; border-top:none;">
+                <button class="btn" onclick="closeDepartmentModal()"
+                    style="background:transparent; color:#94a3b8;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Pensum Modal -->
+    <div class="modal" id="edit-pensum-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Editar Módulo</h2>
+                <p style="color:var(--text-muted); font-size:13px;">Modifica los temas y la duración de este módulo.</p>
+            </div>
+            <div class="modal-body">
+                <form id="edit-pensum-form">
+                    <input type="hidden" id="edit-module-id">
+
+                    <div class="form-group" id="edit-module-department-group" style="margin-bottom:15px; display:none;">
+                        <label for="edit-module-department"
+                            style="display:block; margin-bottom:5px; font-weight:600; font-size:13px;">Departamento /
+                            Categoría</label>
+                        <select id="edit-module-department"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; background:white;">
+                            <option value="Diseño Gráfico">Diseño Gráfico</option>
+                            <option value="Diseño para Redes Sociales">Diseño para Redes Sociales</option>
+                            <option value="Diseño Web">Diseño Web / Multimedia</option>
+                            <option value="Edición de Video">Edición de Video</option>
+                            <option value="Inteligencia Artificial">Inteligencia Artificial</option>
+                            <option value="Marketing Digital">Marketing Digital</option>
+                            <option value="Excel Empresarial">Excel Empresarial</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:15px;">
+                        <label for="edit-module-title"
+                            style="display:block; margin-bottom:5px; font-weight:600; font-size:13px;">Título del
+                            Módulo</label>
+                        <input type="text" id="edit-module-title" disabled
+                            style="background:#f1f5f9; width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:15px;">
+                        <label for="edit-module-duration"
+                            style="display:block; margin-bottom:5px; font-weight:600; font-size:13px;">Duración</label>
+                        <input type="text" id="edit-module-duration" placeholder="Ej. 6 Semanas"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-module-topics"
+                            style="display:block; margin-bottom:5px; font-weight:600; font-size:13px;">Temas (Uno por
+                            línea)</label>
+                        <textarea id="edit-module-topics" rows="10"
+                            style="width:100%; border:1px solid #ddd; border-radius:8px; padding:10px; font-family:inherit;"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:space-between; gap:10px;">
+                <button class="btn" type="button" onclick="window.deleteModule()"
+                    style="background:#fee2e2; color:#ef4444; margin-right:auto;">Eliminar</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" type="button" onclick="window.closeEditPensumModal()"
+                        style="background:#f1f5f9;">Cancelar</button>
+                    <button class="btn btn-primary" type="button" onclick="window.savePensumChanges()">Guardar
+                        Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+
+
+    <!-- Script for mobile nav interaction -->
+    <script>
+
+
+        // --- Mobile Carousel Automation with Touch Swipe ---
+        // Mobile Carousel Script Removed 
+
+        // Wait for DOM to be ready
+        window.addEventListener('load', () => {
+            // initCarousel() was removed but the call remained, causing a crash.
+
+            // Hide loading screen with a small delay for premium feel
+            setTimeout(() => {
+                const loader = document.getElementById('loading-screen');
+                if (loader) {
+                    loader.classList.add('hidden');
+                    // Completely remove from DOM after transition
+                    setTimeout(() => loader.style.display = 'none', 600);
+                }
+            }, 1000);
+        });
+    </script>
+
+    <!-- CORE LOGIC: CACHE BUSTED -->
+    <!-- CORE LOGIC: CACHE BUSTED -->
+    <script src="app.js?v=TOAST_FIX_INLINE_2026"></script>
+    <script src="temp_pensum_logic.js?v=TOAST_FIX_2026"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // FORCE VISIBILITY OF DASHBOARD ON LOAD
+            const dashboard = document.getElementById('content-dashboard');
+            if (dashboard) {
+                dashboard.style.display = 'block';
+                if (window.innerWidth <= 768) dashboard.classList.add('active-view-mobile');
+            }
+
+            if (typeof init === 'function') init();
+
+            // CRITICAL FIX: Force renderPensumConfig when switching to pensum
+            // This works around browser caching issues
+
+            const pensumBtn = document.getElementById('view-pensum');
+            if (pensumBtn) {
+                pensumBtn.addEventListener('click', () => {
+                    // Wait for switchView to complete
+                    setTimeout(() => {
+                        console.log("🎯 Forcing pensum render...");
+                        if (typeof renderPensumConfig === 'function') {
+                            renderPensumConfig();
+                        } else {
+                            console.error("renderPensumConfig not found!");
+                        }
+                    }, 300); // Wait for switchView's setTimeout (250ms) + buffer
+                });
+            }
+
+            // ========================================
+            // MOBILE MENU RESPONSIVE FUNCTIONALITY
+            // ========================================
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileOverlay = document.getElementById('mobile-overlay');
+            const sidebar = document.querySelector('.sidebar');
+            const navItems = document.querySelectorAll('.nav-item');
+
+            // Show/hide mobile menu button based on screen size
+            function updateMobileMenuVisibility() {
+                if (window.innerWidth <= 767) {
+                    if (mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
+                } else {
+                    if (mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+                    if (sidebar) sidebar.classList.remove('mobile-open');
+                    if (mobileOverlay) mobileOverlay.classList.remove('active');
+                }
+            }
+
+            // Toggle sidebar on mobile
+            function toggleMobileSidebar() {
+                if (sidebar && mobileOverlay) {
+                    sidebar.classList.toggle('mobile-open');
+                    mobileOverlay.classList.toggle('active');
+                }
+            }
+
+            // Close sidebar
+            function closeMobileSidebar() {
+                if (sidebar && mobileOverlay) {
+                    sidebar.classList.remove('mobile-open');
+                    mobileOverlay.classList.remove('active');
+                }
+            }
+
+            // Event listeners
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+            }
+
+            if (mobileOverlay) {
+                mobileOverlay.addEventListener('click', closeMobileSidebar);
+            }
+
+            // Close sidebar when clicking nav items on mobile
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (window.innerWidth <= 767) {
+                        closeMobileSidebar();
+                    }
+                });
+            });
+
+            // Update on page load and window resize
+            updateMobileMenuVisibility();
+            window.addEventListener('resize', updateMobileMenuVisibility);
+        });
+    </script>
+    <script>
+        // Force unregister all service workers to clear cache
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <!-- MOBILE BOTTOM NAVIGATION REMOVED -->
+
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

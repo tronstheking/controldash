@@ -1,0 +1,151 @@
+/* Modern Deliverables Board Styling */
+.deliverables-board {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding: 10px 0;
+}
+
+.module-track {
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 25px;
+    border: 1px solid #e2e8f0;
+}
+
+.module-track-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.module-title-box h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #1e293b;
+    font-weight: 800;
+}
+
+.module-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.student-deliverable-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.student-deliverable-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    border-color: var(--primary-light);
+}
+
+.card-top {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.student-info h4 {
+    margin: 0;
+    font-size: 15px;
+    color: #1e293b;
+}
+
+.progress-pill {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.deliverables-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.deliverable-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    background: #f8fafc;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.deliverable-item:hover {
+    background: #f1f5f9;
+}
+
+.deliverable-item.completed {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.deliverable-item.completed .check-box {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+}
+
+.check-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.deliverable-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.deliverable-item.completed .deliverable-text {
+    color: #166534;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+/* Progress Bar at bottom of card */
+.card-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: var(--primary);
+    transition: width 0.5s ease-out;
+}
+
+@media (max-width: 768px) {
+    .student-grid {
+        grid-template-columns: 1fr;
+    }
+}

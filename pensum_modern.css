@@ -1,0 +1,430 @@
+/* ========================================
+   MODERN PENSUM GRID - COLORFUL CARDS
+   ======================================== */
+
+#content-pensum .data-card {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+.pensum-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    padding: 20px 0;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .pensum-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+/* Specialty Section Headers */
+.specialty-section-header {
+    grid-column: 1 / -1;
+    margin-top: 40px;
+    margin-bottom: 25px;
+    text-align: center;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 20px;
+    border: 2px solid #cbd5e1;
+    position: relative;
+    overflow: hidden;
+}
+
+.specialty-section-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
+}
+
+.specialty-section-header:first-child {
+    margin-top: 0;
+}
+
+.specialty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.specialty-badge i {
+    width: 18px;
+    height: 18px;
+}
+
+.specialty-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+}
+
+.specialty-subtitle {
+    font-size: 15px;
+    color: #64748b;
+    font-weight: 600;
+    margin: 0;
+}
+
+
+/* Module Card Styles */
+.module-card {
+    background: linear-gradient(135deg, var(--card-gradient-start), var(--card-gradient-end));
+    border-radius: 24px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.module-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.2);
+}
+
+.module-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(50%, -50%);
+    pointer-events: none;
+}
+
+/* Category Badge */
+.module-category {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Module Title */
+.module-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 12px;
+    line-height: 1.2;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Module Description */
+.module-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+/* Module Stats */
+.module-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.module-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+}
+
+.module-stat i {
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
+}
+
+/* Module Icon (Decorative) */
+.module-icon {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+/* Color Schemes for Different Modules */
+.module-card.color-yellow {
+    --card-gradient-start: #fbbf24;
+    --card-gradient-end: #f59e0b;
+}
+
+.module-card.color-pink {
+    --card-gradient-start: #ec4899;
+    --card-gradient-end: #db2777;
+}
+
+.module-card.color-purple {
+    --card-gradient-start: #a855f7;
+    --card-gradient-end: #7c3aed;
+}
+
+.module-card.color-blue {
+    --card-gradient-start: #3b82f6;
+    --card-gradient-end: #2563eb;
+}
+
+.module-card.color-green {
+    --card-gradient-start: #10b981;
+    --card-gradient-end: #059669;
+}
+
+.module-card.color-orange {
+    --card-gradient-start: #f97316;
+    --card-gradient-end: #ea580c;
+}
+
+.module-card.color-indigo {
+    --card-gradient-start: #6366f1;
+    --card-gradient-end: #4f46e5;
+}
+
+.module-card.color-teal {
+    --card-gradient-start: #14b8a6;
+    --card-gradient-end: #0d9488;
+}
+
+.module-card.color-red {
+    --card-gradient-start: #ef4444;
+    --card-gradient-end: #dc2626;
+}
+
+.module-card.color-cyan {
+    --card-gradient-start: #06b6d4;
+    --card-gradient-end: #0891b2;
+}
+
+/* Topics List (Expandable) */
+.module-topics {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.module-card.expanded .module-topics {
+    max-height: 500px;
+}
+
+.topic-item {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 0;
+    padding-left: 20px;
+    position: relative;
+    line-height: 1.4;
+}
+
+.topic-item::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+}
+
+/* Expand Button */
+.expand-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+    margin-top: 12px;
+}
+
+.expand-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* Empty State */
+.pensum-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.pensum-empty i {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.pensum-empty h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: var(--text-main);
+}
+
+.pensum-empty p {
+    font-size: 14px;
+}
+
+/* Header Section */
+.pensum-header {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.pensum-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.pensum-header p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 5px 0 0 0;
+}
+
+.pensum-filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid #e2e8f0;
+    background: white;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.filter-chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.module-card {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+.module-card:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.module-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.module-card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.module-card:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.module-card:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.module-card:nth-child(6) {
+    animation-delay: 0.3s;
+}
+
+.module-card:nth-child(7) {
+    animation-delay: 0.35s;
+}
+
+.module-card:nth-child(8) {
+    animation-delay: 0.4s;
+}
+
+.module-card:nth-child(9) {
+    animation-delay: 0.45s;
+}
+
+.module-card:nth-child(10) {
+    animation-delay: 0.5s;
+}

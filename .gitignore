@@ -1,0 +1,29 @@
+# Ignorar archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos de Node.js (si decides usar npm)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Ignorar archivos de editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignorar archivos temporales
+*.tmp
+*.log
+*.cache
+
+# Ignorar archivos de backup
+*.bak
+*.backup
+backup_*.json
+
+# NO ignorar archivos de configuración necesarios
+!firebase-config.js
+!.github/

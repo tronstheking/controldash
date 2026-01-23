@@ -1,0 +1,203 @@
+/* ==========================================
+   DELIVERABLES CARDS - PREMIUM PROFESSIONAL DESIGN
+   ========================================== */
+
+.deliverables-board {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.module-track {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.module-track:hover {
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.module-track-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.module-title-box h3 {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 8px 0;
+}
+
+.module-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.student-deliverable-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.student-deliverable-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.student-deliverable-card:hover::before {
+    opacity: 1;
+}
+
+.student-deliverable-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.2);
+    border-color: #c7d2fe;
+}
+
+.card-top {
+    background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.card-top img {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    transition: transform 0.3s;
+}
+
+.student-deliverable-card:hover .card-top img {
+    transform: scale(1.1) rotate(2deg);
+}
+
+.student-info h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+}
+
+.progress-pill {
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s !important;
+}
+
+.student-deliverable-card:hover .progress-pill {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+.deliverables-list {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.deliverable-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 14px !important;
+    border-radius: 10px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+}
+
+.deliverable-item:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    transform: translateX(4px) !important;
+}
+
+.deliverable-item.completed {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+    border-color: #86efac !important;
+}
+
+.deliverable-item.completed:hover {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+    transform: translateX(4px) scale(1.02) !important;
+}
+
+.check-box {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 6px !important;
+    border: 2px solid #cbd5e1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: white !important;
+    transition: all 0.2s !important;
+    flex-shrink: 0 !important;
+}
+
+.deliverable-item.completed .check-box {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    border-color: #16a34a !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+}
+
+.deliverable-text {
+    flex: 1 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    line-height: 1.5 !important;
+}
+
+.deliverable-item.completed .deliverable-text {
+    color: #166534 !important;
+    font-weight: 600 !important;
+}
+
+.card-progress-bar {
+    height: 4px !important;
+    border-radius: 0 0 16px 16px !important;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%) !important;
+}

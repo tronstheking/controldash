@@ -1,0 +1,325 @@
+/* =========================================
+   MODERN ATTENDANCE VIEW STYLES
+   ========================================= */
+
+/* 1. Header & Stats Refinement */
+#content-attendance .view-header {
+    margin-bottom: 30px;
+}
+
+#content-attendance .view-header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    color: #1e293b;
+    /* Solid dark color as per image */
+    background: none;
+    -webkit-text-fill-color: initial;
+    margin-bottom: 4px;
+}
+
+#content-attendance .view-header p {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+    margin: 0;
+}
+
+#attendance-date {
+    border: 1px solid #cbd5e1;
+    background: white;
+    box-shadow: none;
+    border-radius: 8px;
+    padding: 8px 12px 8px 12px !important;
+    font-weight: 600;
+    color: #334155;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s;
+    height: 42px;
+    /* Fixed height for alignment */
+}
+
+#attendance-date:focus {
+    /* Green accent focus */
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.btn-mark-all {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-mark-all:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-mark-all:active {
+    transform: translateY(0);
+}
+
+/* Stats Cards Modernization */
+.eduka-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card-eduka {
+    background: white;
+    border: none;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+    /* Soft float shadow */
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    /* Make clickable */
+    user-select: none;
+}
+
+.stat-card-eduka:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card-eduka:active {
+    transform: translateY(-4px) scale(0.98);
+}
+
+/* Active/Selected State */
+.stat-card-eduka.active {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 0 0 6px currentColor;
+    transform: translateY(-5px);
+}
+
+.stat-card-eduka h3 {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 5px;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+}
+
+.stat-card-eduka .value {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card-eduka:hover .value {
+    transform: scale(1.1);
+}
+
+.stat-card-eduka .sub-text {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    position: relative;
+    z-index: 2;
+}
+
+.stat-card-eduka .icon-bg {
+    position: absolute;
+    right: -10px;
+    bottom: -10px;
+    width: 80px;
+    height: 80px;
+    opacity: 0.15;
+    color: white;
+    z-index: 1;
+    transform: rotate(-15deg);
+    transition: all 0.4s ease;
+}
+
+.stat-card-eduka:hover .icon-bg {
+    transform: rotate(0deg) scale(1.1);
+    opacity: 0.25;
+    animation: pulse-icon 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+
+    0%,
+    100% {
+        transform: rotate(0deg) scale(1.1);
+    }
+
+    50% {
+        transform: rotate(5deg) scale(1.15);
+    }
+}
+
+/* Gradients */
+.stat-card-eduka.bg-green {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-card-eduka.bg-blue {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-card-eduka.bg-purple-deep {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-card-eduka.bg-orange-deep {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+/* 2. Student List - Card Layout */
+.attendance-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.student-att-card {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.student-att-card:hover {
+    transform: translateX(5px);
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.att-card-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.att-card-img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.att-card-info h4 {
+    margin: 0;
+    font-size: 15px;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.att-card-info p {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.att-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Modern Segmented Control for Attendance Status */
+.status-pill-group {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+}
+
+.status-pill {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-pill:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #334155;
+}
+
+/* Active States */
+.status-pill.present.active {
+    background: white;
+    color: #10b981;
+    /* Green */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-pill.absent.active {
+    background: white;
+    color: #ef4444;
+    /* Red */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-pill.late.active {
+    background: white;
+    color: #f59e0b;
+    /* Orange */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+    .student-att-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .att-card-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .status-pill-group {
+        flex: 1;
+        justify-content: space-between;
+    }
+
+    .status-pill {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 4px;
+    }
+}

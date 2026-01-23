@@ -1,0 +1,343 @@
+/* ===============================================
+   MODERN SETTINGS / CONFIGURATION STYLES
+   =============================================== */
+
+/* Configuration Grid Container */
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 0;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+/* Configuration Card */
+.config-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 28px 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.config-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.config-card.interactive {
+    cursor: pointer;
+}
+
+.config-card.interactive:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+    border-color: #a5b4fc;
+}
+
+.config-card.interactive:hover::before {
+    transform: scaleX(1);
+}
+
+.config-card.interactive:active {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+}
+
+/* Icon Container */
+.config-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
+    transition: all 0.3s ease;
+}
+
+.config-card:hover .config-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.35);
+}
+
+.config-icon i {
+    width: 28px;
+    height: 28px;
+    color: white;
+    stroke-width: 2.5px;
+}
+
+/* Label and Subtext */
+.config-label {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+
+.config-subtext {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+/* Input Fields */
+.config-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+    background: white;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.config-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: white;
+}
+
+.config-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+/* Danger Card (Delete/Reset) */
+.config-card[style*="background: #fff1f2"],
+.config-card[style*="background:#fff1f2"] {
+    border-color: #fecdd3 !important;
+}
+
+.config-card[style*="background: #fff1f2"]:hover,
+.config-card[style*="background:#fff1f2"]:hover {
+    border-color: #fda4af !important;
+    box-shadow: 0 12px 30px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* View Header */
+.view-header {
+    margin-bottom: 32px;
+}
+
+.view-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+}
+
+.view-header p {
+    font-size: 15px;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Save Button Container */
+.settings-footer {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 50px;
+}
+
+.settings-footer .btn {
+    padding: 16px 48px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4),
+        0 4px 6px -2px rgba(99, 102, 241, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-footer .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.5),
+        0 8px 16px -4px rgba(99, 102, 241, 0.25);
+}
+
+.settings-footer .btn:active {
+    transform: translateY(0);
+}
+
+.settings-footer .btn i {
+    width: 20px;
+    height: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .config-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .view-header h1 {
+        font-size: 24px;
+    }
+
+    .config-card {
+        padding: 20px 18px;
+    }
+
+    .config-icon {
+        width: 48px;
+        height: 48px;
+    }
+
+    .config-icon i {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.config-card {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+.config-card:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.config-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.config-card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.config-card:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.config-card:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.config-card:nth-child(6) {
+    animation-delay: 0.3s;
+}
+
+.config-card:nth-child(7) {
+    animation-delay: 0.35s;
+}
+
+.config-card:nth-child(8) {
+    animation-delay: 0.4s;
+}
+
+.config-card:nth-child(9) {
+    animation-delay: 0.45s;
+}
+
+.config-card:nth-child(10) {
+    animation-delay: 0.5s;
+}
+
+/* Loading State */
+.config-card.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.config-card.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Success State */
+.config-card.success {
+    border-color: #86efac !important;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+}
+
+.config-card.success .config-icon {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+/* Special Icon Colors */
+.config-icon[style*="color:#f59e0b"],
+.config-icon[style*="color: #f59e0b"] {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+}
+
+.config-icon[style*="color:#ef4444"],
+.config-icon[style*="color: #ef4444"] {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%) !important;
+}
+
+.config-icon[style*="color:#10b981"],
+.config-icon[style*="color: #10b981"] {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+}
+
+.config-icon[style*="color:#3b82f6"],
+.config-icon[style*="color: #3b82f6"] {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+}
+
+.config-icon[style*="color:#166534"],
+.config-icon[style*="color: #166534"] {
+    background: linear-gradient(135deg, #22c55e 0%, #166534 100%) !important;
+}

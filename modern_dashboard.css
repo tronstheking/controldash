@@ -1,0 +1,287 @@
+/* ========================================
+   MODERN DASHBOARD UI COMPONENTS
+   ======================================== */
+
+/* --- MODERN ACTION BUTTONS --- */
+.modern-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-action-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+/* Primary Button - Indigo Gradient */
+.modern-action-btn.primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+}
+
+.modern-action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+}
+
+/* Secondary Button - Outline Style */
+.modern-action-btn.secondary {
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+    border: 2px solid rgba(99, 102, 241, 0.2);
+}
+
+.modern-action-btn.secondary:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: #6366f1;
+    transform: translateY(-2px);
+}
+
+/* Tertiary Button - Ghost Style */
+.modern-action-btn.tertiary {
+    background: rgba(100, 116, 139, 0.06);
+    color: #64748b;
+    border: 1px solid rgba(100, 116, 139, 0.15);
+}
+
+.modern-action-btn.tertiary:hover {
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+    transform: translateY(-1px);
+}
+
+/* Active State */
+.modern-action-btn.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+}
+
+/* --- MODERN WIDGET CARDS --- */
+.grid-cols-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.widget-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.widget-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.widget-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    border-color: #e0e7ff;
+}
+
+.widget-card:hover::before {
+    opacity: 1;
+}
+
+.widget-card h3 {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+}
+
+.widget-card h3 i {
+    width: 18px;
+    height: 18px;
+}
+
+/* Primary Widget - Blue Gradient */
+.widget-card.primary {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #bfdbfe;
+}
+
+.widget-card.primary h3 {
+    color: #1e40af;
+}
+
+.widget-card.primary::before {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+/* Danger Widget - Red Gradient */
+.widget-card.danger {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-color: #fecaca;
+}
+
+.widget-card.danger h3 {
+    color: #b91c1c;
+}
+
+.widget-card.danger::before {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* Warning Widget - Orange/Yellow Gradient */
+.widget-card.warning {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-color: #fde68a;
+}
+
+.widget-card.warning h3 {
+    color: #92400e;
+}
+
+.widget-card.warning::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+/* Stagnant Widget - Ice Blue */
+.widget-card.stagnant {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-color: #bae6fd;
+}
+
+.widget-card.stagnant h3 {
+    color: #075985;
+}
+
+.widget-card.stagnant::before {
+    background: linear-gradient(90deg, #0ea5e9, #0284c7);
+}
+
+/* --- STATS GRID --- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 18px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #ec4899, #f59e0b);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    border-color: #e0e7ff;
+}
+
+.stat-card:hover::after {
+    transform: scaleX(1);
+}
+
+.stat-card .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card .value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* --- ACTIONS BAR --- */
+.actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 768px) {
+    .grid-cols-3 {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .modern-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .widget-card {
+        padding: 20px;
+    }
+
+    .stat-card .value {
+        font-size: 24px;
+    }
+}

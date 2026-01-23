@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function: Check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // USERS Collection
+    match /users/{userId} {
+      // Anyone authenticated can read user data
+      allow read: if isAuthenticated();
+      
+      // Only the user themselves or an admin can update their data
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+    
+    // STUDENTS Collection
+    match /students/{studentId} {
+      // Authenticated users can read all students
+      allow read: if isAuthenticated();
+      
+      // Authenticated users can create/update/delete students
+      allow write: if isAuthenticated();
+    }
+    
+    // ATTENDANCE Collection
+    match /attendance/{recordId} {
+      // Authenticated users can read all attendance records
+      allow read: if isAuthenticated();
+      
+      // Authenticated users can create/update attendance
+      allow write: if isAuthenticated();
+    }
+    
+    // PENSUM Collection
+    match /pensum/{moduleId} {
+      // Authenticated users can read all pensum modules
+      allow read: if isAuthenticated();
+      
+      // Authenticated users can create/update/delete modules
+      allow write: if isAuthenticated();
+    }
+    
+    // SETTINGS Collection
+    match /settings/{settingId} {
+      // Anyone authenticated can read settings
+      allow read: if isAuthenticated();
+      
+      // Only admins can update settings
+      allow write: if isAdmin();
+    }
+    
+    // PAYMENTS Collection
+    match /payments/{paymentId} {
+      // Authenticated users can read all payments
+      allow read: if isAuthenticated();
+      
+      // Authenticated users can create/update payments
+      allow write: if isAuthenticated();
+    }
+    
+    // LOGS Collection (if needed)
+    match /logs/{logId} {
+      // Authenticated users can read logs
+      allow read: if isAuthenticated();
+      
+      // Authenticated users can create logs
+      allow create: if isAuthenticated();
+      
+      // Only admins can update/delete logs
+      allow update, delete: if isAdmin();
+    }
+  }
+}
