@@ -1,7 +1,21 @@
 /**
  * Authentication Module
- * Maneja todas las operaciones de autenticación con Firebase
+ * Handles all authentication operations with Firebase (Modular SDK)
  */
+
+import { auth, db } from './firebase-config.js';
+import {
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import {
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 const AuthService = {
     /**
@@ -9,13 +23,14 @@ const AuthService = {
      */
     async login(email, password) {
         try {
-            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             // Obtener datos adicionales del usuario desde Firestore
-            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
 
-            if (userDoc.exists) {
+            if (userDoc.exists()) {
                 const userData = userDoc.data();
 
                 // Guardar datos del usuario en memoria y localStorage (para compatibilidad)
@@ -50,7 +65,7 @@ const AuthService = {
      */
     async logout() {
         try {
-            await firebase.auth().signOut();
+            await signOut(auth);
             localStorage.removeItem('currentUser');
             window.currentUser = null;
             window.location.href = 'login.html';
@@ -64,12 +79,14 @@ const AuthService = {
      */
     async checkAuth() {
         return new Promise((resolve) => {
-            firebase.auth().onAuthStateChanged(async (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     // Usuario autenticado, cargar datos
                     try {
-                        const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-                        if (userDoc.exists) {
+                        const userDocRef = doc(db, 'users', user.uid);
+                        const userDoc = await getDoc(userDocRef);
+
+                        if (userDoc.exists()) {
                             const userData = userDoc.data();
                             const currentUser = {
                                 uid: user.uid,
@@ -115,17 +132,17 @@ const AuthService = {
     async createUser(email, password, userData) {
         try {
             // Crear usuario en Firebase Auth
-            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             // Guardar datos adicionales en Firestore
-            await firebase.firestore().collection('users').doc(user.uid).set({
+            await setDoc(doc(db, 'users', user.uid), {
                 id: userData.id,
                 name: userData.name,
                 instructor: userData.instructor,
                 specialties: userData.specialties || [],
                 role: userData.role || 'instructor',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: serverTimestamp()
             });
 
             return { success: true, uid: user.uid };
@@ -157,5 +174,7 @@ const AuthService = {
     }
 };
 
-// Exportar para uso global
+// Exportar para uso global y modulo
 window.AuthService = AuthService;
+export default AuthService;
+

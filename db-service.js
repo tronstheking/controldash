@@ -1,7 +1,22 @@
 /**
  * Database Service
- * Maneja todas las operaciones con Firestore
+ * Handles all Firestore operations (Modular SDK)
  */
+
+import { db } from './firebase-config.js';
+import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    onSnapshot,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 const DBService = {
     /**
@@ -9,13 +24,13 @@ const DBService = {
      */
     async getStudents(department = null) {
         try {
-            let query = firebase.firestore().collection('students');
+            let q = collection(db, 'students');
 
             if (department) {
-                query = query.where('department', '==', department);
+                q = query(q, where('department', '==', department));
             }
 
-            const snapshot = await query.get();
+            constsnapshot = await getDocs(q);
             const students = [];
 
             snapshot.forEach(doc => {
@@ -34,12 +49,13 @@ const DBService = {
 
     async saveStudent(studentData) {
         try {
-            const studentId = studentData.id || firebase.firestore().collection('students').doc().id;
+            const studentId = studentData.id || doc(collection(db, 'students')).id;
+            const studentRef = doc(db, 'students', studentId);
 
-            await firebase.firestore().collection('students').doc(studentId).set({
+            await setDoc(studentRef, {
                 ...studentData,
                 id: studentId,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: serverTimestamp()
             }, { merge: true });
 
             return { success: true, id: studentId };
@@ -51,7 +67,7 @@ const DBService = {
 
     async deleteStudent(studentId) {
         try {
-            await firebase.firestore().collection('students').doc(studentId).delete();
+            await deleteDoc(doc(db, 'students', studentId));
             return { success: true };
         } catch (error) {
             console.error('Error eliminando estudiante:', error);
@@ -64,21 +80,21 @@ const DBService = {
      */
     async getAttendance(filters = {}) {
         try {
-            let query = firebase.firestore().collection('attendance');
+            let q = collection(db, 'attendance');
 
             if (filters.studentId) {
-                query = query.where('studentId', '==', filters.studentId);
+                q = query(q, where('studentId', '==', filters.studentId));
             }
 
             if (filters.startDate) {
-                query = query.where('date', '>=', filters.startDate);
+                q = query(q, where('date', '>=', filters.startDate));
             }
 
             if (filters.endDate) {
-                query = query.where('date', '<=', filters.endDate);
+                q = query(q, where('date', '<=', filters.endDate));
             }
 
-            const snapshot = await query.get();
+            const snapshot = await getDocs(q);
             const records = [];
 
             snapshot.forEach(doc => {
@@ -97,12 +113,13 @@ const DBService = {
 
     async saveAttendance(recordData) {
         try {
-            const recordId = recordData.id || firebase.firestore().collection('attendance').doc().id;
+            const recordId = recordData.id || doc(collection(db, 'attendance')).id;
+            const recordRef = doc(db, 'attendance', recordId);
 
-            await firebase.firestore().collection('attendance').doc(recordId).set({
+            await setDoc(recordRef, {
                 ...recordData,
                 id: recordId,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: serverTimestamp()
             }, { merge: true });
 
             return { success: true, id: recordId };
@@ -117,13 +134,13 @@ const DBService = {
      */
     async getPensumContent(department = null) {
         try {
-            let query = firebase.firestore().collection('pensum');
+            let q = collection(db, 'pensum');
 
             if (department) {
-                query = query.where('department', '==', department);
+                q = query(q, where('department', '==', department));
             }
 
-            const snapshot = await query.get();
+            const snapshot = await getDocs(q);
             const modules = {};
 
             snapshot.forEach(doc => {
@@ -139,9 +156,9 @@ const DBService = {
 
     async savePensumModule(moduleId, moduleData) {
         try {
-            await firebase.firestore().collection('pensum').doc(moduleId).set({
+            await setDoc(doc(db, 'pensum', moduleId), {
                 ...moduleData,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: serverTimestamp()
             }, { merge: true });
 
             return { success: true };
@@ -153,7 +170,7 @@ const DBService = {
 
     async deletePensumModule(moduleId) {
         try {
-            await firebase.firestore().collection('pensum').doc(moduleId).delete();
+            await deleteDoc(doc(db, 'pensum', moduleId));
             return { success: true };
         } catch (error) {
             console.error('Error eliminando módulo:', error);
@@ -166,10 +183,11 @@ const DBService = {
      */
     async getSettings() {
         try {
-            const doc = await firebase.firestore().collection('settings').doc('academy').get();
+            const docRef = doc(db, 'settings', 'academy');
+            const docSnap = await getDoc(docRef);
 
-            if (doc.exists) {
-                return doc.data();
+            if (docSnap.exists()) {
+                return docSnap.data();
             }
 
             // Valores por defecto si no existen
@@ -188,9 +206,9 @@ const DBService = {
 
     async saveSettings(settingsData) {
         try {
-            await firebase.firestore().collection('settings').doc('academy').set({
+            await setDoc(doc(db, 'settings', 'academy'), {
                 ...settingsData,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: serverTimestamp()
             }, { merge: true });
 
             return { success: true };
@@ -205,10 +223,11 @@ const DBService = {
      */
     async getDeliverables(studentId) {
         try {
-            const doc = await firebase.firestore().collection('students').doc(studentId).get();
+            const docRef = doc(db, 'students', studentId);
+            const docSnap = await getDoc(docRef);
 
-            if (doc.exists) {
-                return doc.data().deliverables || [];
+            if (docSnap.exists()) {
+                return docSnap.data().deliverables || [];
             }
 
             return [];
@@ -220,9 +239,10 @@ const DBService = {
 
     async saveDeliverables(studentId, deliverables) {
         try {
-            await firebase.firestore().collection('students').doc(studentId).update({
+            const docRef = doc(db, 'students', studentId);
+            await updateDoc(docRef, {
                 deliverables: deliverables,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: serverTimestamp()
             });
 
             return { success: true };
@@ -237,7 +257,7 @@ const DBService = {
      */
     async getPayments() {
         try {
-            const snapshot = await firebase.firestore().collection('payments').get();
+            const snapshot = await getDocs(collection(db, 'payments'));
             const payments = [];
 
             snapshot.forEach(doc => {
@@ -256,12 +276,13 @@ const DBService = {
 
     async savePayment(paymentData) {
         try {
-            const paymentId = paymentData.id || firebase.firestore().collection('payments').doc().id;
+            const paymentId = paymentData.id || doc(collection(db, 'payments')).id;
+            const paymentRef = doc(db, 'payments', paymentId);
 
-            await firebase.firestore().collection('payments').doc(paymentId).set({
+            await setDoc(paymentRef, {
                 ...paymentData,
                 id: paymentId,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: serverTimestamp()
             }, { merge: true });
 
             return { success: true, id: paymentId };
@@ -275,13 +296,13 @@ const DBService = {
      * REAL-TIME LISTENERS
      */
     listenToStudents(department, callback) {
-        let query = firebase.firestore().collection('students');
+        let q = collection(db, 'students');
 
         if (department) {
-            query = query.where('department', '==', department);
+            q = query(q, where('department', '==', department));
         }
 
-        return query.onSnapshot(snapshot => {
+        return onSnapshot(q, (snapshot) => {
             const students = [];
             snapshot.forEach(doc => {
                 students.push({
@@ -294,13 +315,13 @@ const DBService = {
     },
 
     listenToPensum(department, callback) {
-        let query = firebase.firestore().collection('pensum');
+        let q = collection(db, 'pensum');
 
         if (department) {
-            query = query.where('department', '==', department);
+            q = query(q, where('department', '==', department));
         }
 
-        return query.onSnapshot(snapshot => {
+        return onSnapshot(q, (snapshot) => {
             const modules = {};
             snapshot.forEach(doc => {
                 modules[doc.id] = doc.data();
@@ -312,3 +333,5 @@ const DBService = {
 
 // Exportar para uso global
 window.DBService = DBService;
+export default DBService;
+

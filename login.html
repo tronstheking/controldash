@@ -13,14 +13,11 @@
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Firebase SDK v9 (Compatible Mode) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK v9 (Modular) - Loaded via ES Modules in firebase-config.js -->
 
-    <!-- Firebase Config & Services -->
-    <script src="firebase-config.js"></script>
-    <script src="auth.js"></script>
+    <!-- Firebase Config & Services (ES Modules) -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="auth.js"></script>
 
     <style>
         :root {
@@ -530,11 +527,24 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
         lucide.createIcons();
 
-        // Inicializar Firebase
-        const firebaseReady = initializeFirebase();
+        // Función auxiliar para esperar que firebase esté listo
+        const waitForFirebase = () => {
+            return new Promise(resolve => {
+                if (window.initializeFirebase && window.AuthService) {
+                    resolve();
+                } else {
+                    const interval = setInterval(() => {
+                        if (window.initializeFirebase && window.AuthService) {
+                            clearInterval(interval);
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        };
 
         const form = document.getElementById('login-form');
         const errorMsg = document.getElementById('error-message');
@@ -551,7 +561,13 @@
             loginBtn.disabled = true;
             errorMsg.style.display = 'none';
 
-            // Si Firebase no está configurado, usar sistema hardcoded de respaldo
+            // Esperar a que carguen los módulos
+            await waitForFirebase();
+
+            // Inicializar Firebase (verificación)
+            const firebaseReady = window.initializeFirebase ? window.initializeFirebase() : false;
+
+            // Si Firebase no está configurado, usar sistema hardcoded de respaldo (legacy logic)
             if (!firebaseReady) {
                 console.warn("Usando sistema de autenticación local (Firebase no configurado)");
                 useLocalAuth(email, password);
@@ -559,7 +575,7 @@
             }
 
             // Usar Firebase Authentication
-            const result = await AuthService.login(email, password);
+            const result = await window.AuthService.login(email, password);
 
             if (result.success) {
                 // Success

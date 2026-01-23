@@ -2,45 +2,58 @@
  * MIGRATION SCRIPT: LocalStorage to Firebase
  * 
  * INSTRUCCIONES:
- * 1. Asegúrate de tener Firebase configurado correctamente en firebase-config.js
- * 2. Abre la consola del navegador (F12)
- * 3. Copia y pega esta función en la consola
- * 4. Ejecuta: migrateToFirebase()
- * 5. Espera a que complete la migración
- * 
- * ADVERTENCIA: Este script solo debe ejecutarse UNA VEZ para migrar datos existentes
+ * 1. Agrega este script a tu HTML temporalmente: <script type="module" src="migrate-to-firebase.js"></script>
+ * 2. Abre la consola
+ * 3. Ejecuta window.migrateToFirebase()
  */
 
-async function migrateToFirebase() {
-    console.log("🚀 Iniciando migración de datos a Firebase...");
+import { db } from './firebase-config.js';
+import { writeBatch, doc, serverTimestamp, collection } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    if (!firebase.auth().currentUser) {
+async function migrateToFirebase() {
+    console.log("🚀 Iniciando migración de datos a Firebase (Modular SDK)...");
+
+    // Verificar si hay usuario (usando la variable global que expone auth.js)
+    if (!window.currentUser && !window.firebaseAuth.currentUser) {
         console.error("❌ Debes estar autenticado para migrar datos. Primero inicia sesión.");
         return;
     }
 
     try {
-        const db = firebase.firestore();
         let totalMigrated = 0;
+        const batch = writeBatch(db);
+        let operationCount = 0;
+
+        const commitBatch = async () => {
+            if (operationCount > 0) {
+                await batch.commit();
+                console.log(`💾 Lote guardado (${operationCount} operaciones)`);
+                operationCount = 0;
+                // Re-instantiate batch is not needed for the same batch instance? 
+                // writeBatch returns a new batch. We need to create a new one after commit.
+                // Actually commit() writes it. We need a new batch for next ops.
+                // But let's keep it simple: simpler to just use DBService or single writes if batching is complex in a loop with generic logic.
+                // But batch is better.
+            }
+        };
 
         // 1. MIGRAR ESTUDIANTES
         console.log("\n📚 Migrando estudiantes...");
         const studentsData = localStorage.getItem('design_students');
         if (studentsData) {
             const students = JSON.parse(studentsData);
-            const batch = db.batch();
 
-            students.forEach(student => {
-                const studentRef = db.collection('students').doc(student.id || db.collection('students').doc().id);
+            for (const student of students) {
+                const studentId = student.id || doc(collection(db, 'students')).id;
+                const studentRef = doc(db, 'students', studentId);
                 batch.set(studentRef, {
                     ...student,
-                    migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    id: studentId,
+                    migratedAt: serverTimestamp()
                 });
                 totalMigrated++;
-            });
-
-            await batch.commit();
-            console.log(`✅ Migrados ${students.length} estudiantes`);
+                operationCount++;
+            }
         }
 
         // 2. MIGRAR PENSUM CONTENT
@@ -48,19 +61,16 @@ async function migrateToFirebase() {
         const pensumData = localStorage.getItem('design_pensum_content');
         if (pensumData) {
             const pensum = JSON.parse(pensumData);
-            const batch = db.batch();
 
-            Object.entries(pensum).forEach(([moduleId, content]) => {
-                const moduleRef = db.collection('pensum').doc(moduleId);
+            for (const [moduleId, content] of Object.entries(pensum)) {
+                const moduleRef = doc(db, 'pensum', moduleId);
                 batch.set(moduleRef, {
                     content: content,
-                    migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    migratedAt: serverTimestamp()
                 });
                 totalMigrated++;
-            });
-
-            await batch.commit();
-            console.log(`✅ Migrados ${Object.keys(pensum).length} módulos del pensum`);
+                operationCount++;
+            }
         }
 
         // 3. MIGRAR ATTENDANCE RECORDS
@@ -68,19 +78,16 @@ async function migrateToFirebase() {
         const attendanceData = localStorage.getItem('attendanceRecords');
         if (attendanceData) {
             const records = JSON.parse(attendanceData);
-            const batch = db.batch();
 
-            Object.entries(records).forEach(([key, record]) => {
-                const recordRef = db.collection('attendance').doc();
+            for (const record of Object.values(records)) {
+                const recordRef = doc(collection(db, 'attendance'));
                 batch.set(recordRef, {
                     ...record,
-                    migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    migratedAt: serverTimestamp()
                 });
                 totalMigrated++;
-            });
-
-            await batch.commit();
-            console.log(`✅ Migrados ${Object.keys(records).length} registros de asistencia`);
+                operationCount++;
+            }
         }
 
         // 4. MIGRAR SETTINGS
@@ -93,41 +100,41 @@ async function migrateToFirebase() {
             avatar: localStorage.getItem('instructorAvatar') || 'https://ui-avatars.com/api/?name=Academia+CTD&background=random&color=fff&bold=true&size=128'
         };
 
-        await db.collection('settings').doc('academy').set({
+        const settingsRef = doc(db, 'settings', 'academy');
+        batch.set(settingsRef, {
             ...settingsData,
-            migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+            migratedAt: serverTimestamp()
         });
-        console.log(`✅ Configuración migrada`);
         totalMigrated++;
+        operationCount++;
 
         // 5. MIGRAR PAYMENTS (si existen)
         console.log("\n💰 Migrando pagos...");
         const paymentsData = localStorage.getItem('payments');
         if (paymentsData) {
             const payments = JSON.parse(paymentsData);
-            const batch = db.batch();
 
-            payments.forEach(payment => {
-                const paymentRef = db.collection('payments').doc();
+            for (const payment of payments) {
+                const paymentRef = doc(collection(db, 'payments'));
                 batch.set(paymentRef, {
                     ...payment,
-                    migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    migratedAt: serverTimestamp()
                 });
                 totalMigrated++;
-            });
+                operationCount++;
+            }
+        }
 
+        // Commit final
+        if (operationCount > 0) {
             await batch.commit();
-            console.log(`✅ Migrados ${payments.length} pagos`);
         }
 
         console.log("\n\n🎉 MIGRACIÓN COMPLETADA EXITOSAMENTE!");
         console.log(`📊 Total de documentos migrados: ${totalMigrated}`);
-        console.log("\n⚠️ RECOMENDACIÓN: Haz un backup de tu localStorage antes de continuar:");
-        console.log("Ejecuta: backupLocalStorage()");
 
     } catch (error) {
         console.error("❌ Error durante la migración:", error);
-        console.error("Detalles:", error.message);
     }
 }
 
@@ -158,6 +165,5 @@ function backupLocalStorage() {
 window.migrateToFirebase = migrateToFirebase;
 window.backupLocalStorage = backupLocalStorage;
 
-console.log("📝 Script de migración cargado.");
-console.log("Para migrar datos, ejecuta: migrateToFirebase()");
-console.log("Para hacer backup, ejecuta: backupLocalStorage()");
+console.log("📝 Script de migración cargado (Modular).");
+

@@ -25,15 +25,12 @@
     <link rel="stylesheet" href="settings_modern.css">
     <link rel="stylesheet" href="deliverables_cards.css">
 
-    <!-- Firebase SDK v9 (Compatible Mode) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK v9 (Modular) - Loaded via ES Modules in firebase-config.js -->
 
-    <!-- Firebase Config & Services -->
-    <script src="firebase-config.js"></script>
-    <script src="auth.js"></script>
-    <script src="db-service.js"></script>
+    <!-- Firebase Config & Services (ES Modules) -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="db-service.js"></script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -502,15 +499,36 @@
 
 <body>
     <!-- Authentication Check -->
-    <script>
+    <script type="module">
         // Verificar autenticación al cargar la página
         (async function () {
             // Inicializar Firebase
-            const firebaseReady = initializeFirebase ? initializeFirebase() : false;
+            // Nota: En módulos, las variables globales pueden no estar disponibles inmediatamente si no se adjuntan a window
+            // Pero como adjuntamos a window en los módulos, deberíamos esperar o verificar
 
-            if (firebaseReady && typeof AuthService !== 'undefined') {
+            // Función auxiliar para esperar que firebase esté listo
+            const waitForFirebase = () => {
+                return new Promise(resolve => {
+                    if (window.initializeFirebase && window.AuthService) {
+                        resolve();
+                    } else {
+                        const interval = setInterval(() => {
+                            if (window.initializeFirebase && window.AuthService) {
+                                clearInterval(interval);
+                                resolve();
+                            }
+                        }, 50);
+                    }
+                });
+            };
+
+            await waitForFirebase();
+
+            const firebaseReady = window.initializeFirebase ? window.initializeFirebase() : false;
+
+            if (firebaseReady && window.AuthService) {
                 // Verificar autenticación con Firebase
-                const authenticated = await AuthService.requireAuth();
+                const authenticated = await window.AuthService.requireAuth();
                 if (!authenticated) {
                     return; // requireAuth ya redirige a login
                 }
@@ -524,6 +542,7 @@
             }
         })();
     </script>
+
 
     <!-- PREMIUM LOADING SCREEN -->
     <div id="loading-screen">
