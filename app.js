@@ -485,18 +485,51 @@
             renderStudents(); // localized re-render would be better but this is fast enough
         };
 
-        // Initialize Data with Legacy Fallback
-        let legacyData = localStorage.getItem('studentsData') ? JSON.parse(localStorage.getItem('studentsData')) : null;
-        let robustData = localStorage.getItem('design_students') ? JSON.parse(localStorage.getItem('design_students')) : null;
+        // Initialize Data (Empty by default, loaded from DB)
+        window.students = [];
 
-        // Prefer robust, fall back to legacy, default to empty
-        window.students = robustData || legacyData || [];
+        // LOAD FROM DATABASE
+        window.loadStudents = async (retryCount = 0) => {
+            if (!window.DBService) {
+                console.warn(`⚠️ DBService not available (Attempt ${retryCount + 1})`);
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadStudents(retryCount + 1), 500);
+                    return;
+                }
+                console.error("❌ DBService failed to load after retries.");
+                window.showToast("Error: No se pudo conectar con la base de datos.", "error");
+                return;
+            }
 
-        // If we found legacy data but no robust data, save immediately to new format
-        if (legacyData && !robustData) {
-            console.log("🔄 Migrating legacy data to new format...");
-            localStorage.setItem('design_students', JSON.stringify(window.students));
-        }
+            console.log("🚀 Loading students from Firestore...");
+            try {
+                // If logged in as specific department, filter at DB level ideally, or client side
+                // Admin gets all.
+
+                // For now, get ALL and let the client-side 'getFilteredStudents' handle the view filtering
+                // Optimization: Pass department to getStudents if not admin
+                let deptFilter = null;
+                if (currentUser && currentUser.id !== 'admin') {
+                    deptFilter = currentUser.id;
+                }
+
+                const studentsFromDB = await window.DBService.getStudents();
+
+                // Update Global State
+                window.students = studentsFromDB;
+
+                // Refresh UI
+                if (typeof renderStudents === 'function') renderStudents();
+                if (typeof updateStats === 'function') updateStats();
+                if (typeof renderStagnantStudents === 'function') renderStagnantStudents();
+                if (typeof checkCriticalPoints === 'function') checkCriticalPoints();
+
+                console.log(`✅ Loaded ${window.students.length} students from DB`);
+            } catch (error) {
+                console.error("Error loading students:", error);
+                window.showToast("Error cargando datos", "error");
+            }
+        };
         const savedPensum = JSON.parse(localStorage.getItem('design_pensum_content')) || {};
         // Merge defaults with saved to ensure new modules appear
         window.pensumContent = { ...defaultPensumContent, ...savedPensum };
@@ -1001,6 +1034,7 @@
                 if (typeof setupSidebarToggle === 'function') setupSidebarToggle();
                 if (typeof setupMobileMenu === 'function') setupMobileMenu();
                 if (typeof renderMatrix === 'function') renderMatrix(); // Force init render
+                if (typeof window.loadStudents === 'function') window.loadStudents(); // <--- LOAD DB DATA
             } catch (err) {
                 console.error("Initialization Error:", err);
             }
@@ -1111,7 +1145,13 @@
                 type: 'manual'
             });
 
-            save();
+            if (window.DBService) {
+                window.DBService.saveStudent(students[idx])
+                    .then(() => window.showToast("Bitácora actualizada en nube", 'success'))
+                    .catch(e => console.error(e));
+            } else {
+                save();
+            }
             openDetailsModal(idx); // Refresh modal
         };
 
@@ -1571,13 +1611,16 @@
 
         window.closeEditModal = () => document.getElementById('edit-modal').classList.remove('active');
 
-        document.getElementById('edit-form').onsubmit = (e) => {
+        document.getElementById('edit-form').onsubmit = async (e) => {
             e.preventDefault();
             const idx = document.getElementById('edit-index').value;
             const s = students[idx];
 
+            if (!s) return;
+
+            // Update Local Object
             s.name = document.getElementById('edit-name').value;
-            s.dni = document.getElementById('edit-dni').value; // Save DNI
+            s.dni = document.getElementById('edit-dni').value;
             s.gender = document.getElementById('edit-gender').value;
             s.phone = document.getElementById('edit-phone').value;
             s.portfolio = document.getElementById('edit-portfolio').value;
@@ -1590,8 +1633,19 @@
             document.getElementById('edit-schedule-container').querySelectorAll('input:checked').forEach(cb => schedules.push(cb.value));
             s.schedule = schedules;
 
-            save();
-            window.showToast("Datos del estudiante actualizados", 'success');
+            // SAVE TO DB
+            if (window.DBService) {
+                try {
+                    await window.DBService.saveStudent(s);
+                    window.showToast("Datos actualizados en la nube", 'success');
+                } catch (err) {
+                    console.error("Error saving edit:", err);
+                    window.showToast("Error al guardar en DB", 'error');
+                }
+            } else {
+                save(); // Fallback
+            }
+
             document.getElementById('edit-modal').classList.remove('active');
             renderStudents();
             updateStats();
@@ -1873,7 +1927,15 @@
             students[idx].topic = newTopic;
             if (!students[idx].topicDates) students[idx].topicDates = {};
             students[idx].topicDates[newTopic] = new Date().toISOString().split('T')[0];
-            save();
+
+            if (window.DBService) {
+                window.DBService.saveStudent(students[idx])
+                    .then(() => console.log("Topic synced"))
+                    .catch(e => console.error(e));
+            } else {
+                save();
+            }
+
             renderStudents();
             updateStats();
         };
@@ -2010,8 +2072,21 @@
             list.splice(idx, 1);
 
             // Save & Render
-            if (typeof window.save === 'function') window.save();
-            else localStorage.setItem('design_students', JSON.stringify(list));
+            if (window.DBService) {
+                // Async delete
+                (async () => {
+                    try {
+                        const res = await window.DBService.deleteStudent(id);
+                        if (res.success) window.showToast("Estudiante borrado de la nube.", 'success');
+                        else window.showToast("Error borrando de la nube.", 'error');
+                    } catch (err) {
+                        console.error("Delete DB error:", err);
+                    }
+                })();
+            } else {
+                if (typeof window.save === 'function') window.save();
+                else localStorage.setItem('design_students', JSON.stringify(list));
+            }
 
             window.renderStudents();
             // window.updateStats(); // Removed as it doesn't exist anymore
@@ -2526,7 +2601,28 @@
                 };
 
                 students.push(newStudent);
-                save(); // Syncs to cloud automatically via global save()
+
+                // SAVE TO DB
+                if (window.DBService) {
+                    (async () => {
+                        try {
+                            const result = await window.DBService.saveStudent(newStudent);
+                            if (result.success) {
+                                console.log("✅ Student saved to DB");
+                            } else {
+                                console.error("Error saving student (DBService):", result.error);
+                                window.showToast("Error al guardar en la nube: " + result.error, "error");
+                            }
+                        } catch (err) {
+                            console.error("Error saving new student (Exception):", err);
+                            window.showToast("Error crítico al guardar.", "error");
+                        }
+                    })();
+                } else {
+                    console.error("❌ DBService missing during save.");
+                    window.showToast("Error de Conexión: No se pudo guardar en la nube.", 'error');
+                    save(); // Fallback
+                }
 
                 window.showToast(`¡${name} registrado correctamente!`, 'success');
 
