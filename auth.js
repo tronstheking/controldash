@@ -23,7 +23,11 @@ const AuthService = {
      */
     async login(email, password) {
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // Normalization: Handle "ñ" -> "n" (e.g., diseño@ctd.com -> diseno@ctd.com)
+            // This allows the user to type "diseño" but authenticates against the "diseno" account in Firebase
+            const normalizedEmail = email.toLowerCase().replace(/ñ/g, 'n');
+
+            const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
             const user = userCredential.user;
 
             // Obtener datos adicionales del usuario desde Firestore
@@ -31,7 +35,24 @@ const AuthService = {
             const userDoc = await getDoc(userDocRef);
 
             if (userDoc.exists()) {
-                const userData = userDoc.data();
+                let userData = userDoc.data();
+
+                // FORCE LEGACY MAPPING: Ensure ID matches the dashboard expected ID based on email
+                const legacyMapping = {
+                    'diseno@ctd.com': { id: 'design', name: 'Diseño Gráfico', role: 'instructor' },
+                    'multimedia@ctd.com': { id: 'multimedia', name: 'Multimedia', role: 'instructor' },
+                    'admin@ctd.com': { id: 'admin', name: 'Dirección', role: 'admin' },
+                    'ia@ctd.com': { id: 'ai', name: 'Inteligencia Artificial', role: 'instructor' },
+                    'marketing@ctd.com': { id: 'marketing', name: 'Marketing Digital', role: 'instructor' },
+                    'excel@ctd.com': { id: 'excel', name: 'Excel Empresarial', role: 'instructor' }
+                };
+
+                const mappedData = legacyMapping[email.toLowerCase()];
+                if (mappedData) {
+                    // Merge mapped data but preserve existing firestore data if needed, or overwrite?
+                    // Overwrite critical fields to ensure system works
+                    userData = { ...userData, ...mappedData };
+                }
 
                 // Guardar datos del usuario en memoria y localStorage (para compatibilidad)
                 const currentUser = {
@@ -87,7 +108,23 @@ const AuthService = {
                         const userDoc = await getDoc(userDocRef);
 
                         if (userDoc.exists()) {
-                            const userData = userDoc.data();
+                            let userData = userDoc.data();
+
+                            // RE-APPLY LEGACY MAPPING ON RELOAD
+                            const legacyMapping = {
+                                'diseno@ctd.com': { id: 'design', name: 'Diseño Gráfico', role: 'instructor' },
+                                'multimedia@ctd.com': { id: 'multimedia', name: 'Multimedia', role: 'instructor' },
+                                'admin@ctd.com': { id: 'admin', name: 'Dirección', role: 'admin' },
+                                'ia@ctd.com': { id: 'ai', name: 'Inteligencia Artificial', role: 'instructor' },
+                                'marketing@ctd.com': { id: 'marketing', name: 'Marketing Digital', role: 'instructor' },
+                                'excel@ctd.com': { id: 'excel', name: 'Excel Empresarial', role: 'instructor' }
+                            };
+
+                            const mappedData = legacyMapping[user.email.toLowerCase()];
+                            if (mappedData) {
+                                userData = { ...userData, ...mappedData };
+                            }
+
                             const currentUser = {
                                 uid: user.uid,
                                 email: user.email,
