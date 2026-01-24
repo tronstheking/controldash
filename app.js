@@ -1972,8 +1972,21 @@
                 s.topicDates = { [s.topic]: new Date().toISOString().split('T')[0] };
 
                 window.showToast(`¡Felicidades! ${s.name} ha sido promovido a ${nextMod}.`, 'success');
-                save();
+
+                // SAVE TO DB (Wait for it to ensure consistency)
+                if (window.DBService) {
+                    window.DBService.saveStudent(s)
+                        .then(() => console.log("Promotion saved."))
+                        .catch(err => {
+                            console.error(err);
+                            window.showToast("Error guardando promoción en nube", "error");
+                        });
+                } else {
+                    save();
+                }
+
                 renderStudents();
+                updateStats();
                 updateStats();
             } else {
                 // Career Path Progression Logic
