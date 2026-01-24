@@ -30,7 +30,7 @@ const DBService = {
                 q = query(q, where('department', '==', department));
             }
 
-            constsnapshot = await getDocs(q);
+            const snapshot = await getDocs(q);
             const students = [];
 
             snapshot.forEach(doc => {
