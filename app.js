@@ -501,47 +501,44 @@
                 return;
             }
 
-            console.log("🚀 Loading students from Firestore...");
+            console.log("🚀 Setting up Real-time Listener...");
+
             try {
                 // If logged in as specific department, filter at DB level ideally, or client side
-                // Admin gets all.
-
-                // For now, get ALL and let the client-side 'getFilteredStudents' handle the view filtering
-                // Optimization: Pass department to getStudents if not admin
                 let deptFilter = null;
                 if (currentUser && currentUser.id !== 'admin') {
                     deptFilter = currentUser.id;
                 }
 
-                const studentsFromDB = await window.DBService.getStudents();
+                // Unsubscribe previous listener if exists
+                if (window.studentsListener) {
+                    window.studentsListener();
+                }
 
-                // Update Global State AND Local Scope Reference
-                window.students = studentsFromDB;
+                // Subscribe to real-time updates
+                window.studentsListener = window.DBService.listenToStudents(deptFilter, (studentsFromDB) => {
+                    console.log(`🔄 Real-time update: ${studentsFromDB.length} students loaded.`);
 
-                // CRITICAL FIX: Update the local 'students' variable that getFilteredStudents uses
-                // Just in case it's not referencing window.students directly (scope capture)
-                if (typeof students !== 'undefined') {
-                    // If students is a 'let', we can reassign it if we are in the same scope.
-                    // But if it's top level, we might need to rely on side effects.
-                    // Instead, let's just clear the array and push new items if it's a const, 
-                    // or reassign if we can. 
-                    // Safest approach if we can't reassign local 'let': Array splice.
-                    if (Array.isArray(students)) {
+                    // Update Global State
+                    window.students = studentsFromDB;
+
+                    // SYNC LOCAL SCOPE VARIABLE (CRITICAL FIX)
+                    // This updates the 'students' let variable captured by other functions like getFilteredStudents
+                    if (typeof students !== 'undefined' && Array.isArray(students)) {
                         students.length = 0;
                         students.push(...studentsFromDB);
                     }
-                }
 
-                // Refresh UI
-                if (typeof renderStudents === 'function') renderStudents();
-                if (typeof updateStats === 'function') updateStats();
-                if (typeof renderStagnantStudents === 'function') renderStagnantStudents();
-                if (typeof checkCriticalPoints === 'function') checkCriticalPoints();
+                    // Refresh UI
+                    if (typeof renderStudents === 'function') renderStudents();
+                    if (typeof updateStats === 'function') updateStats();
+                    if (typeof renderStagnantStudents === 'function') renderStagnantStudents();
+                    if (typeof checkCriticalPoints === 'function') checkCriticalPoints();
+                });
 
-                console.log(`✅ Loaded ${window.students.length} students from DB`);
             } catch (error) {
-                console.error("Error loading students:", error);
-                window.showToast("Error cargando datos", "error");
+                console.error("Error setting up listener:", error);
+                window.showToast("Error conectando actualizaciones en tiempo real", "error");
             }
         };
         const savedPensum = JSON.parse(localStorage.getItem('design_pensum_content')) || {};
@@ -5319,7 +5316,10 @@
             if (!select) return;
 
             // Get modules for current user's department
-            const modules = (typeof getDepartmentModules === 'function' ? getDepartmentModules() : Object.keys(pensumContent || {})).sort();
+            // Get modules for current user's department
+            const rawModules = (typeof getDepartmentModules === 'function' ? getDepartmentModules() : Object.keys(pensumContent || {}));
+            const deleted = JSON.parse(localStorage.getItem('deletedModules') || '[]');
+            const modules = rawModules.filter(m => !deleted.includes(m)).sort();
 
             select.innerHTML = '<option value="">-- Selecciona un módulo --</option>' +
                 modules.map(mod => `<option value="${mod}">${mod}</option>`).join('');
