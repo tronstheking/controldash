@@ -506,9 +506,14 @@
             try {
                 // If logged in as specific department, filter at DB level ideally, or client side
                 let deptFilter = null;
+                // CRITICAL FIX: Always load ALL students from DB for now.
+                // The DB documents might not have the 'department' field set correctly yet,
+                // relying on client-side getFilteredStudents() for the view is safer.
+                /* 
                 if (currentUser && currentUser.id !== 'admin') {
                     deptFilter = currentUser.id;
                 }
+                */
 
                 // Unsubscribe previous listener if exists
                 if (window.studentsListener) {
