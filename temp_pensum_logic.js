@@ -516,6 +516,14 @@ window.renderPensumConfig = () => {
             userRoles = Object.keys(specialtiesMap);
         } else {
             userRoles = currentUser.specialties || [];
+            if (userRoles.length === 0) {
+                // Fallback Mapping based on ID
+                if (currentUser.id === 'design') userRoles = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
+                else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+                else if (currentUser.id === 'ai') userRoles = ['Inteligencia Artificial'];
+                else if (currentUser.id === 'marketing') userRoles = ['Marketing Digital', 'Marketing 5.0'];
+                else if (currentUser.id === 'excel') userRoles = ['Excel Empresarial', 'Experto en Excel'];
+            }
         }
 
         userRoles.forEach(role => {
@@ -561,7 +569,17 @@ window.filterPensumByCategory = (category) => {
     if (category === 'all') {
         let userRoles = [];
         if (currentUser.id === 'admin') userRoles = Object.keys(specialtiesMap);
-        else userRoles = currentUser.specialties || [];
+        else {
+            userRoles = currentUser.specialties || [];
+            if (userRoles.length === 0) {
+                // Fallback Mapping based on ID (Same as above)
+                if (currentUser.id === 'design') userRoles = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
+                else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+                else if (currentUser.id === 'ai') userRoles = ['Inteligencia Artificial'];
+                else if (currentUser.id === 'marketing') userRoles = ['Marketing Digital', 'Marketing 5.0'];
+                else if (currentUser.id === 'excel') userRoles = ['Excel Empresarial', 'Experto en Excel'];
+            }
+        }
 
         userRoles.forEach(role => {
             if (specialtiesMap[role]) modulesToShow = [...modulesToShow, ...specialtiesMap[role]];
