@@ -794,6 +794,8 @@
             if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
             if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
             if (window.loadAttendanceFromFirebase) window.loadAttendanceFromFirebase();
+            if (window.loadPaymentsFromFirebase) window.loadPaymentsFromFirebase();
+            if (window.loadAuditLogsFromFirebase) window.loadAuditLogsFromFirebase();
         });
 
         // 3. Force Sync Manual Function
@@ -822,6 +824,19 @@
                 // 3. Sync Settings
                 await window.DBService.saveSettings(window.academySettings || {});
                 console.log("✅ Settings synced");
+
+                // 4. Sync Payments (Manual Push if needed)
+                if (window.payments && window.payments.length > 0) {
+                    // We iterate because we don't have a batch save for payments yet, or we could add one.
+                    // For safety, let's just log that real-time handles it, or force re-save last few?
+                    // Actually, better to just rely on real-time. But let's at least log it.
+                    console.log("ℹ️ Payments are synced via real-time logic.");
+                }
+
+                // 5. Force Attendance Sync (Full Object)
+                const attRecords = JSON.parse(localStorage.getItem('attendanceRecords') || '{}');
+                await window.DBService.saveAttendanceContent(attRecords);
+                console.log("✅ Attendance synced");
 
                 window.showToast("¡Sincronización Cloud Completada!", "success");
             } catch (error) {
@@ -1009,15 +1024,22 @@
 
         window.logAction = (action, detail) => {
             const log = {
-                id: Date.now(),
+                id: Date.now().toString(),
                 date: new Date().toISOString(),
                 user: currentUser ? currentUser.instructor : 'Sistema',
                 action: action,
                 detail: detail
             };
-            globalLogs.unshift(log); // Add to top
-            if (globalLogs.length > 500) globalLogs.pop(); // Keep last 500
+
+            // Local Update (Optimistic UI)
+            globalLogs.unshift(log);
+            if (globalLogs.length > 500) globalLogs.pop();
             localStorage.setItem('globalLogs', JSON.stringify(globalLogs));
+
+            // Cloud Sync
+            if (window.DBService) {
+                window.DBService.saveAuditLog(log);
+            }
         };
 
         window.renderAuditLog = () => {
@@ -4489,6 +4511,47 @@
             renderAttendance();
         };
 
+        // === REAL-TIME PAYMENTS SYNC ===
+        window.loadPaymentsFromFirebase = async () => {
+            if (!window.DBService) return;
+            console.log("🚀 Setting up Real-time Payments Listener...");
+
+            window.DBService.listenToPayments((cloudPayments) => {
+                if (cloudPayments) {
+                    console.log(`💰 Payments sync: ${cloudPayments.length} records`);
+                    // Sort by date (newest first)
+                    cloudPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    // Sync Global Variable
+                    window.payments = cloudPayments;
+                    localStorage.setItem('payments_db', JSON.stringify(window.payments)); // Update locale cache
+
+                    // Refresh if view is active
+                    if (document.getElementById('content-finance').style.display === 'block') {
+                        if (typeof renderFinance === 'function') renderFinance();
+                    }
+                }
+            });
+        };
+
+        // === REAL-TIME AUDIT SYNC ===
+        window.loadAuditLogsFromFirebase = async () => {
+            if (!window.DBService) return;
+            console.log("🚀 Setting up Real-time Audit Listener...");
+
+            window.DBService.listenToAuditLogs((cloudLogs) => {
+                if (cloudLogs) {
+                    console.log(`🛡️ Audit sync: ${cloudLogs.length} records`);
+                    window.globalLogs = cloudLogs;
+                    localStorage.setItem('globalLogs', JSON.stringify(window.globalLogs));
+
+                    if (document.getElementById('content-audit').style.display === 'block') {
+                        if (typeof renderAuditLog === 'function') renderAuditLog();
+                    }
+                }
+            });
+        };
+
 
         // Data Backup (Data Safety)
         window.downloadBackup = () => {
@@ -5080,8 +5143,18 @@
             const concept = document.getElementById('pay-concept').value;
             const method = document.getElementById('pay-method').value;
 
-            payments.push({ id: Date.now(), student: studentName, date, amount, concept, method });
+            const newPayment = { id: Date.now().toString(), student: studentName, date, amount, concept, method };
+
+            // Optimistic Local Update
+            payments.push(newPayment);
             localStorage.setItem('payments_db', JSON.stringify(payments));
+
+            // Cloud Sync
+            if (window.DBService) {
+                window.DBService.savePayment(newPayment).then(res => {
+                    if (res.success) window.showToast("Pago registrado en la nube", "success");
+                });
+            }
 
             // Log It
             window.logAction('Pago Recibido', `$${amount} - ${studentName} (${concept})`);

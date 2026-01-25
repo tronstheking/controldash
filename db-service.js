@@ -16,7 +16,10 @@ import {
     where,
     onSnapshot,
     serverTimestamp,
-    deleteField
+    deleteField,
+    addDoc,
+    orderBy,
+    limit
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 const DBService = {
@@ -278,7 +281,7 @@ const DBService = {
     async savePayment(paymentData) {
         try {
             const paymentId = paymentData.id || doc(collection(db, 'payments')).id;
-            const paymentRef = doc(db, 'payments', paymentId);
+            const paymentRef = doc(db, 'payments', paymentId.toString());
 
             await setDoc(paymentRef, {
                 ...paymentData,
@@ -291,6 +294,52 @@ const DBService = {
             console.error('Error guardando pago:', error);
             return { success: false, error: error.message };
         }
+    },
+
+    listenToPayments(callback) {
+        const q = query(collection(db, 'payments'));
+        return onSnapshot(q, (snapshot) => {
+            const payments = [];
+            snapshot.forEach(doc => {
+                payments.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            callback(payments);
+        });
+    },
+
+    /**
+     * AUDIT LOGS - Bitácora de seguridad
+     */
+    async saveAuditLog(logData) {
+        try {
+            // Append-only logs
+            await addDoc(collection(db, 'audit_logs'), {
+                ...logData,
+                timestamp: serverTimestamp()
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('Error guardando log:', error);
+            return { success: false };
+        }
+    },
+
+    listenToAuditLogs(callback) {
+        // Limit to last 100 logs to avoid heavy reads
+        const q = query(collection(db, 'audit_logs'), orderBy('timestamp', 'desc'), limit(100));
+        return onSnapshot(q, (snapshot) => {
+            const logs = [];
+            snapshot.forEach(doc => {
+                logs.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            callback(logs);
+        });
     },
 
     /**
