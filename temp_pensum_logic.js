@@ -284,17 +284,48 @@ window.renderModulesList = (list, activeCategory = 'all') => {
     // Priority: 1. Cloud Metadata (window.pensumMetadata), 2. LocalStorage
     const customMap = window.pensumMetadata || JSON.parse(localStorage.getItem('customModules') || '{}');
 
-    // Logic: If on 'all', show all custom modules. If specific category, show only those.
+    // Get Current User for Permission Checking
+    const currentUser = window.currentUser || JSON.parse(localStorage.getItem('currentUser')) || { id: 'admin' };
+    const userRole = currentUser.id;
+    // Determine allowed categories for this user
+    let allowedCategories = [];
+    if (userRole === 'admin') {
+        allowedCategories = ['*'];
+    } else {
+        allowedCategories = currentUser.specialties || [];
+        // Fallback IDs if specialties missing
+        if (allowedCategories.length === 0) {
+            if (userRole === 'design') allowedCategories = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
+            else if (userRole === 'multimedia') allowedCategories = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+            else if (userRole === 'ai') allowedCategories = ['Inteligencia Artificial'];
+            else if (userRole === 'marketing') allowedCategories = ['Marketing Digital', 'Marketing 5.0'];
+            else if (userRole === 'excel') allowedCategories = ['Excel Empresarial', 'Experto en Excel'];
+        }
+    }
+
+    // Logic: If on 'all', show all custom modules but FILTERED by user permissions.
     if (activeCategory === 'all') {
-        Object.values(customMap).forEach(modArray => {
-            expandedList = [...expandedList, ...modArray];
+        Object.keys(customMap).forEach(category => {
+            // Only show if user is admin OR has this category in their allowed list
+            if (allowedCategories.includes('*') || allowedCategories.includes(category)) {
+                expandedList = [...expandedList, ...customMap[category]];
+            }
         });
 
-        // CRITICAL FIX: Also add any module present in window.pensumContent (Firebase Source)
-        // This ensures modules created in other sessions appear in "Todos" even if not mapped locally
-        if (window.pensumContent) {
+        // Handling Uncategorized / Orphaned Modules from Firebase
+        // Only show these to Admin to prevent clutter for instructors
+        if (allowedCategories.includes('*') && window.pensumContent) {
             Object.keys(window.pensumContent).forEach(key => {
-                expandedList.push(key);
+                // Only add if not already in list (avoid duplicates)
+                if (!expandedList.includes(key)) {
+                    // Check if it's truly uncategorized (not in any customMap category)
+                    let isCategorized = false;
+                    Object.values(customMap).forEach(arr => {
+                        if (arr.includes(key)) isCategorized = true;
+                    });
+
+                    if (!isCategorized) expandedList.push(key);
+                }
             });
         }
     } else {
