@@ -198,6 +198,13 @@ window.savePensumChanges = () => {
         if (!customMap[selectedCategory].includes(title)) {
             customMap[selectedCategory].push(title);
             localStorage.setItem('customModules', JSON.stringify(customMap));
+
+            // SYNC METADATA TO FIREBASE
+            if (window.DBService && window.DBService.savePensumMetadata) {
+                window.DBService.savePensumMetadata(customMap)
+                    .then(() => console.log("✅ Metadata (Categories) synced"))
+                    .catch(e => console.error("❌ Metadata sync failed", e));
+            }
         }
     }
 
@@ -274,7 +281,8 @@ window.renderModulesList = (list, activeCategory = 'all') => {
     });
 
     // MERGE CUSTOM MODULES
-    const customMap = JSON.parse(localStorage.getItem('customModules') || '{}');
+    // Priority: 1. Cloud Metadata (window.pensumMetadata), 2. LocalStorage
+    const customMap = window.pensumMetadata || JSON.parse(localStorage.getItem('customModules') || '{}');
 
     // Logic: If on 'all', show all custom modules. If specific category, show only those.
     if (activeCategory === 'all') {

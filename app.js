@@ -603,13 +603,28 @@
                             }
                         }
                     } else {
-                        // No data in Firebase, migrate from localStorage
-                        console.log("📤 Migrating pensum to Firebase...");
-                        if (window.DBService && typeof window.DBService.savePensumContent === 'function') {
-                            window.DBService.savePensumContent(window.pensumContent);
-                        }
+                        // If null (or empty), just keep defaults or localStorage
+                        console.warn("Got empty pensum from DB, keeping local defaults");
                     }
                 });
+
+                // NEW: Listen to Pensum Metadata (Categories)
+                if (window.DBService.listenToPensumMetadata) {
+                    window.pensumMetadataListener = window.DBService.listenToPensumMetadata((metadata) => {
+                        console.log("🎨 Pensum Metadata (Categories) updated:", metadata);
+                        window.pensumMetadata = metadata;
+                        localStorage.setItem('customModules', JSON.stringify(metadata));
+
+                        // Force refresh views that depend on categories
+                        if (typeof window.renderPensumConfig === 'function') {
+                            const pensumSection = document.getElementById('content-pensum');
+                            if (pensumSection && pensumSection.style.display !== 'none') {
+                                window.renderPensumConfig();
+                            }
+                        }
+                    });
+                }
+
             } catch (error) {
                 console.error("Error setting up pensum listener:", error);
             }

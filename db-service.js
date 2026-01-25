@@ -436,6 +436,9 @@ const DBService = {
     /**
      * Listen to Pensum Content changes in real-time
      */
+    /**
+     * Listen to Pensum Content changes in real-time
+     */
     listenToPensumContent(callback) {
         const docRef = doc(db, 'pensum_content', 'all');
         return onSnapshot(docRef, (docSnap) => {
@@ -457,6 +460,34 @@ const DBService = {
             } else {
                 console.warn("⚠️ Pensum doc does not exist, using defaults.");
                 callback(null); // Will trigger defaults
+            }
+        });
+    },
+
+    /**
+     * FATALIDAD FIX: Persist Category Metadata
+     */
+    async savePensumMetadata(metadata) {
+        try {
+            const docRef = doc(db, 'pensum_content', 'metadata');
+            await setDoc(docRef, {
+                customModules: metadata,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return { success: true };
+        } catch (error) {
+            console.error('Error guardando metadata del pensum:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    listenToPensumMetadata(callback) {
+        const docRef = doc(db, 'pensum_content', 'metadata');
+        return onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                callback(docSnap.data().customModules || {});
+            } else {
+                callback({});
             }
         });
     }
