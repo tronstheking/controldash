@@ -281,6 +281,14 @@ window.renderModulesList = (list, activeCategory = 'all') => {
         Object.values(customMap).forEach(modArray => {
             expandedList = [...expandedList, ...modArray];
         });
+
+        // CRITICAL FIX: Also add any module present in window.pensumContent (Firebase Source)
+        // This ensures modules created in other sessions appear in "Todos" even if not mapped locally
+        if (window.pensumContent) {
+            Object.keys(window.pensumContent).forEach(key => {
+                expandedList.push(key);
+            });
+        }
     } else {
         if (customMap[activeCategory]) {
             expandedList = [...expandedList, ...customMap[activeCategory]];
