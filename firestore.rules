@@ -41,22 +41,25 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
     
-    // PENSUM Collection
+    // PENSUM Collection (Legacy)
     match /pensum/{moduleId} {
-      // Authenticated users can read all pensum modules
-      allow read: if isAuthenticated();
-      
-      // Authenticated users can create/update/delete modules
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
+    }
+
+    // PENSUM CONTENT Collection (New Bulk)
+    match /pensum_content/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // DEPARTMENTS Collection
+    match /departments/{deptId} {
+      allow read, write: if isAuthenticated();
     }
     
     // SETTINGS Collection
     match /settings/{settingId} {
-      // Anyone authenticated can read settings
-      allow read: if isAuthenticated();
-      
-      // Only admins can update settings
-      allow write: if isAdmin();
+      // Allow write for authenticated users (Instructor)
+      allow read, write: if isAuthenticated();
     }
     
     // PAYMENTS Collection
