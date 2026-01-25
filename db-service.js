@@ -408,13 +408,23 @@ const DBService = {
     /**
      * PENSUM - Get entire pensum content
      */
+    /**
+     * PENSUM - Get entire pensum content
+     */
     async getPensumContent() {
         try {
             const docRef = doc(db, 'pensum_content', 'all');
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {
-                return docSnap.data().modules || {};
+                const data = docSnap.data();
+                // Support both nested 'modules' and root-level data
+                if (data.modules) return data.modules;
+
+                // If no modules key, return data directly (excluding metadata)
+                const cleanData = { ...data };
+                delete cleanData.updatedAt;
+                return cleanData;
             }
             return null; // Will use defaults
         } catch (error) {
@@ -430,8 +440,22 @@ const DBService = {
         const docRef = doc(db, 'pensum_content', 'all');
         return onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
-                callback(docSnap.data().modules || {});
+                console.log("🔥 Pensum Snapshot received!");
+                const data = docSnap.data();
+
+                // Support both nested 'modules' and root-level data
+                if (data.modules) {
+                    console.log("📦 Parsed Nested 'modules' field");
+                    callback(data.modules);
+                } else {
+                    console.log("📂 Parsed Root-level fields");
+                    // If no modules key, return data directly (excluding metadata)
+                    const cleanData = { ...data };
+                    delete cleanData.updatedAt;
+                    callback(cleanData);
+                }
             } else {
+                console.warn("⚠️ Pensum doc does not exist, using defaults.");
                 callback(null); // Will trigger defaults
             }
         });
