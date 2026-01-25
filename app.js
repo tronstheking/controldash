@@ -781,6 +781,7 @@
             if (window.loadPensumFromFirebase) window.loadPensumFromFirebase();
             if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
             if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
+            if (window.loadAttendanceFromFirebase) window.loadAttendanceFromFirebase();
         } else {
             console.log("⏳ Waiting for DBServiceReady event...");
         }
@@ -792,6 +793,7 @@
             if (window.loadPensumFromFirebase) window.loadPensumFromFirebase();
             if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
             if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
+            if (window.loadAttendanceFromFirebase) window.loadAttendanceFromFirebase();
         });
 
         // 3. Force Sync Manual Function
@@ -4334,6 +4336,34 @@
             reportWindow.document.close();
         };
 
+
+        // === REAL-TIME ATTENDANCE SYNC ===
+        window.loadAttendanceFromFirebase = async (retryCount = 0) => {
+            if (!window.DBService) {
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadAttendanceFromFirebase(retryCount + 1), 500);
+                    return;
+                }
+                return;
+            }
+
+            console.log("🚀 Setting up Real-time Attendance Listener...");
+            // Listen to cloud changes
+            window.DBService.listenToAttendanceContent((cloudRecords) => {
+                if (cloudRecords && Object.keys(cloudRecords).length > 0) {
+                    console.log("🔥 Attendance sync received!");
+                    localStorage.setItem('attendanceRecords', JSON.stringify(cloudRecords));
+
+                    // Force re-render if we are in attendance view
+                    if (document.getElementById('content-attendance').style.display === 'block') {
+                        if (typeof renderAttendance === 'function') renderAttendance();
+                    }
+                    // Update charts if needed
+                    if (typeof renderAttendanceTrendChart === 'function') renderAttendanceTrendChart();
+                }
+            });
+        };
+
         window.saveSingleAttendance = (idx) => {
             const s = students[idx];
             const status = document.getElementById(`att-status-${idx}`).value;
@@ -4350,6 +4380,11 @@
 
             localStorage.setItem('attendanceRecords', JSON.stringify(records));
 
+            // CLOUD SYNC
+            if (window.DBService) {
+                window.DBService.saveAttendanceContent(records);
+            }
+
             // Check for dropouts
             if (status === 'A') {
                 if (!s.logs) s.logs = [];
@@ -4362,7 +4397,7 @@
 
                 const absences = checkRecentAbsences(s.name);
                 if (absences >= 3) {
-                    window.showToast(`âš ï¸ ALERTA CRíTICA: ${s.name} ha acumulado ${absences} faltas consecutivas. Riesgo de deserción.`, 'error');
+                    window.showToast(`⚠️ ALERTA CRÍTICA: ${s.name} ha acumulado ${absences} faltas consecutivas. Riesgo de deserción.`, 'error');
                 }
             }
 
@@ -4393,6 +4428,11 @@
             }
 
             localStorage.setItem('attendanceRecords', JSON.stringify(records));
+
+            // CLOUD SYNC
+            if (window.DBService) {
+                window.DBService.saveAttendanceContent(records);
+            }
 
             // Find student object for logs
             const s = students.find(st => st.name === studentName);
@@ -4439,6 +4479,12 @@
             });
 
             localStorage.setItem('attendanceRecords', JSON.stringify(records));
+
+            // CLOUD SYNC
+            if (window.DBService) {
+                window.DBService.saveAttendanceContent(records);
+            }
+
             window.showToast("Todos los alumnos presentes marcados para hoy.", 'success');
             renderAttendance();
         };

@@ -533,6 +533,35 @@ const DBService = {
             if (error.code === 'not-found') return { success: true };
             return { success: false, error: error.message };
         }
+    },
+
+    /**
+     * ATTENDANCE - Singleton Pattern (Like Pensum)
+     */
+    async saveAttendanceContent(records) {
+        try {
+            const docRef = doc(db, 'attendance_content', 'all');
+            await setDoc(docRef, {
+                records: records,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return { success: true };
+        } catch (error) {
+            console.error('Error guardando asistencia en nube:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    listenToAttendanceContent(callback) {
+        const docRef = doc(db, 'attendance_content', 'all');
+        return onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                console.log("🔥 Attendance Snapshot received!");
+                callback(docSnap.data().records || {});
+            } else {
+                callback({});
+            }
+        });
     }
 };
 
