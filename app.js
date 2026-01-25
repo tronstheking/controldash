@@ -610,10 +610,20 @@
 
                 // NEW: Listen to Pensum Metadata (Categories)
                 if (window.DBService.listenToPensumMetadata) {
-                    window.pensumMetadataListener = window.DBService.listenToPensumMetadata((metadata) => {
-                        console.log("🎨 Pensum Metadata (Categories) updated:", metadata);
-                        window.pensumMetadata = metadata;
-                        localStorage.setItem('customModules', JSON.stringify(metadata));
+                    window.pensumMetadataListener = window.DBService.listenToPensumMetadata((fullMetadata) => {
+                        console.log("🎨 Pensum Metadata updated included deleted:", fullMetadata);
+
+                        // Handle structure (backwards compat)
+                        const customModules = fullMetadata.customModules || fullMetadata; // in case old format
+                        const deletedModules = fullMetadata.deleted || [];
+
+                        // 1. Update Custom Categories
+                        window.pensumMetadata = customModules;
+                        localStorage.setItem('customModules', JSON.stringify(customModules));
+
+                        // 2. Update Global Blacklist
+                        window.globalDeletedModules = deletedModules;
+                        localStorage.setItem('globalDeletedModules', JSON.stringify(deletedModules));
 
                         // Force refresh views that depend on categories
                         if (typeof window.renderPensumConfig === 'function') {

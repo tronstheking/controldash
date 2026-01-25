@@ -535,51 +535,60 @@ const DBService = {
         const docRef = doc(db, 'pensum_content', 'metadata');
         return onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
-                callback(docSnap.data().customModules || {});
+                // Return FULL metadata now (customModules + deleted)
+                callback(docSnap.data());
             } else {
-                callback({});
+                callback({ customModules: {}, deleted: [] });
             }
         });
     },
 
     /**
-     * DELETE MODULE (Hard Delete)
+     * DELETE MODULE (Hard Delete + Blacklist)
      */
     async deletePensumModule(moduleName, currentCategory) {
         try {
-            // 1. Delete content (modules.ModuleName)
+            // 1. Delete content (modules.ModuleName) if it exists in DB
             const contentRef = doc(db, 'pensum_content', 'all');
-            // We use updateDoc with deleteField() to remove a specific key from the map
-            // BUT since we support root-level too, we try both just in case, or just root if that's what we use now.
-            // The safest is to try to delete it as a root field.
             await updateDoc(contentRef, {
                 [moduleName]: deleteField(),
-                [`modules.${moduleName}`]: deleteField() // Try nested too just in case
-            });
+                [`modules.${moduleName}`]: deleteField()
+            }).catch(e => console.log("Module content not found in DB (might be default), skipping content delete."));
 
-            // 2. Remove from Metadata (Category)
-            if (currentCategory) {
-                const metaRef = doc(db, 'pensum_content', 'metadata');
-                const metaSnap = await getDoc(metaRef);
-                if (metaSnap.exists()) {
-                    const customModules = metaSnap.data().customModules || {};
-                    if (customModules[currentCategory]) {
-                        // Filter out the module
-                        customModules[currentCategory] = customModules[currentCategory].filter(m => m !== moduleName);
-                        // Update metadata
-                        await updateDoc(metaRef, {
-                            customModules: customModules,
-                            updatedAt: serverTimestamp()
-                        });
-                    }
+            // 2. Remove from Metadata (Category) AND Add to Blacklist
+            const metaRef = doc(db, 'pensum_content', 'metadata');
+            const metaSnap = await getDoc(metaRef);
+
+            let updates = { updatedAt: serverTimestamp() };
+
+            if (metaSnap.exists()) {
+                const data = metaSnap.data();
+
+                // A. Remove from Custom Categories
+                const customModules = data.customModules || {};
+                if (currentCategory && customModules[currentCategory]) {
+                    customModules[currentCategory] = customModules[currentCategory].filter(m => m !== moduleName);
+                    updates.customModules = customModules;
                 }
+
+                // B. Add to Global Deleted Blacklist (for default modules)
+                const deleted = data.deleted || [];
+                if (!deleted.includes(moduleName)) {
+                    deleted.push(moduleName);
+                    updates.deleted = deleted;
+                }
+            } else {
+                // Init if not exists
+                updates.deleted = [moduleName];
+                updates.customModules = {};
             }
+
+            await setDoc(metaRef, updates, { merge: true });
 
             return { success: true };
         } catch (error) {
             console.error('Error borrando módulo:', error);
-            // If error is "No document to update", maybe it didn't exist, treat as success
-            if (error.code === 'not-found') return { success: true };
+            // Even if it failed, we return false so UI knows
             return { success: false, error: error.message };
         }
     },

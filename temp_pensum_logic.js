@@ -413,9 +413,11 @@ window.renderModulesList = (list, activeCategory = 'all') => {
 
 // Helper Function: Render Specialty Card
 window.renderSpecialtyCard = (title, id, colorClass, activeCategory = 'all') => {
-    // 0. Check if Deleted
-    const deleted = JSON.parse(localStorage.getItem('deletedModules') || '[]');
-    if (deleted.includes(title)) return '';
+    // 0. Check if Deleted (Local OR Global)
+    const deletedLocal = JSON.parse(localStorage.getItem('deletedModules') || '[]');
+    const deletedGlobal = window.globalDeletedModules || JSON.parse(localStorage.getItem('globalDeletedModules') || '[]');
+
+    if (deletedLocal.includes(title) || deletedGlobal.includes(title)) return '';
 
     // 1. Data Retrieval
     const contentMap = window.pensumContent || JSON.parse(localStorage.getItem('design_pensum_content')) || {};
