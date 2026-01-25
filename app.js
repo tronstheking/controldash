@@ -4097,6 +4097,12 @@
             });
 
             localStorage.setItem('attendanceRecords', JSON.stringify(records));
+
+            // CLOUD SYNC
+            if (window.DBService && window.DBService.saveAttendanceContent) {
+                window.DBService.saveAttendanceContent(records);
+            }
+
             window.renderAttendance();
             window.showToast(`${studentsToMark.length} alumnos marcados como PRESENTES`, 'success');
 

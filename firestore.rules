@@ -32,13 +32,9 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
     
-    // ATTENDANCE Collection
-    match /attendance/{recordId} {
-      // Authenticated users can read all attendance records
-      allow read: if isAuthenticated();
-      
-      // Authenticated users can create/update attendance
-      allow write: if isAuthenticated();
+    // ATTENDANCE CONTENT Collection (Bulk Sync)
+    match /attendance_content/{docId} {
+      allow read, write: if isAuthenticated();
     }
     
     // PENSUM Collection (Legacy)
@@ -71,8 +67,8 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
     
-    // LOGS Collection (if needed)
-    match /logs/{logId} {
+    // AUDIT LOGS Collection
+    match /audit_logs/{logId} {
       // Authenticated users can read logs
       allow read: if isAuthenticated();
       
