@@ -328,6 +328,113 @@ const DBService = {
             });
             callback(modules);
         });
+    },
+
+    /**
+     * Listen to Settings changes in real-time
+     */
+    listenToSettings(callback) {
+        const docRef = doc(db, 'settings', 'academy');
+        return onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                callback(docSnap.data());
+            } else {
+                // Return defaults if no settings exist
+                callback({
+                    name: 'Academia CTD',
+                    maxCapacity: 10,
+                    riskPercent: 75,
+                    riskAbsences: 2,
+                    avatar: 'https://ui-avatars.com/api/?name=Academia+CTD&background=random&color=fff&bold=true&size=128'
+                });
+            }
+        });
+    },
+
+    /**
+     * Listen to Departments changes in real-time
+     */
+    listenToDepartments(callback) {
+        return onSnapshot(collection(db, 'departments'), (snapshot) => {
+            const departments = [];
+            snapshot.forEach(doc => {
+                departments.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            callback(departments);
+        });
+    },
+
+    /**
+     * DEPARTMENTS - Save all departments
+     */
+    async saveDepartments(departments) {
+        try {
+            // Save each department as a separate document
+            for (const dept of departments) {
+                const deptRef = doc(db, 'departments', dept.id);
+                await setDoc(deptRef, {
+                    ...dept,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error guardando departamentos:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * PENSUM - Save entire pensum content
+     */
+    async savePensumContent(pensumData) {
+        try {
+            // Save as a single document for simplicity
+            const pensumRef = doc(db, 'pensum_content', 'all');
+            await setDoc(pensumRef, {
+                modules: pensumData,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return { success: true };
+        } catch (error) {
+            console.error('Error guardando pensum:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * PENSUM - Get entire pensum content
+     */
+    async getPensumContent() {
+        try {
+            const docRef = doc(db, 'pensum_content', 'all');
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                return docSnap.data().modules || {};
+            }
+            return null; // Will use defaults
+        } catch (error) {
+            console.error('Error obteniendo pensum:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Listen to Pensum Content changes in real-time
+     */
+    listenToPensumContent(callback) {
+        const docRef = doc(db, 'pensum_content', 'all');
+        return onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                callback(docSnap.data().modules || {});
+            } else {
+                callback(null); // Will trigger defaults
+            }
+        });
     }
 };
 

@@ -149,6 +149,13 @@ window.savePensumChanges = () => {
     window.pensumContent[title] = newTopics;
     localStorage.setItem('design_pensum_content', JSON.stringify(window.pensumContent));
 
+    // SYNC TO FIREBASE
+    if (window.DBService && window.DBService.savePensumContent) {
+        window.DBService.savePensumContent(window.pensumContent)
+            .then(() => console.log("✅ Pensum synced to Firebase"))
+            .catch(err => console.error("❌ Error syncing pensum:", err));
+    }
+
     // 1.5 SMART SYNC: Update Students currently on these topics
     if (window.students && !isNew) {
         let studentsUpdated = false;
@@ -207,7 +214,7 @@ window.savePensumChanges = () => {
     // 5. GLOBAL UI REFRESH: Ensure all areas reflect changes
     if (typeof window.renderStudents === 'function') window.renderStudents();
     if (typeof window.updateStats === 'function') window.updateStats();
-    if (window.showToast) window.showToast("Pensum y Estudiantes sincronizados.", "success");
+    if (window.showToast) window.showToast("Pensum sincronizado en tiempo real.", "success");
 };
 
 window.deleteModule = () => {

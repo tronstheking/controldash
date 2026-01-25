@@ -557,6 +557,110 @@
             }
         });
 
+        // === REAL-TIME PENSUM SYNC ===
+        window.loadPensumFromFirebase = async (retryCount = 0) => {
+            if (!window.DBService) {
+                console.warn(`⚠️ DBService not available for pensum (Attempt ${retryCount + 1})`);
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadPensumFromFirebase(retryCount + 1), 500);
+                    return;
+                }
+                console.log("Using localStorage pensum as fallback");
+                return;
+            }
+
+            console.log("🚀 Setting up Real-time Pensum Listener...");
+
+            try {
+                // Unsubscribe previous listener if exists
+                if (window.pensumListener) {
+                    window.pensumListener();
+                }
+
+                // Subscribe to real-time updates
+                window.pensumListener = window.DBService.listenToPensumContent((pensumFromDB) => {
+                    if (pensumFromDB && Object.keys(pensumFromDB).length > 0) {
+                        console.log(`🔄 Real-time pensum update received`);
+
+                        // Merge with defaults to ensure new modules exist
+                        window.pensumContent = { ...defaultPensumContent, ...pensumFromDB };
+
+                        // Sync local variable
+                        if (typeof pensumContent !== 'undefined') {
+                            Object.keys(window.pensumContent).forEach(key => {
+                                pensumContent[key] = window.pensumContent[key];
+                            });
+                        }
+
+                        // Update localStorage as cache
+                        localStorage.setItem('design_pensum_content', JSON.stringify(window.pensumContent));
+
+                        // Refresh UI if pensum view is open
+                        if (typeof window.renderPensumConfig === 'function') {
+                            const pensumSection = document.getElementById('content-pensum');
+                            if (pensumSection && pensumSection.style.display !== 'none') {
+                                window.renderPensumConfig();
+                            }
+                        }
+                    } else {
+                        // No data in Firebase, migrate from localStorage
+                        console.log("📤 Migrating pensum to Firebase...");
+                        if (window.DBService && typeof window.DBService.savePensumContent === 'function') {
+                            window.DBService.savePensumContent(window.pensumContent);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error setting up pensum listener:", error);
+            }
+        };
+
+        // === REAL-TIME SETTINGS SYNC ===
+        window.loadSettingsFromFirebase = async (retryCount = 0) => {
+            if (!window.DBService) {
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadSettingsFromFirebase(retryCount + 1), 500);
+                    return;
+                }
+                return;
+            }
+
+            console.log("🚀 Setting up Real-time Settings Listener...");
+
+            try {
+                if (window.settingsListener) {
+                    window.settingsListener();
+                }
+
+                window.settingsListener = window.DBService.listenToSettings((settingsFromDB) => {
+                    console.log(`🔄 Real-time settings update received`);
+                    window.academySettings = settingsFromDB;
+
+                    // Update UI elements
+                    const headerTitle = document.querySelector('.header-title');
+                    if (headerTitle && settingsFromDB.name) {
+                        headerTitle.textContent = settingsFromDB.name;
+                    }
+
+                    const headerAvatar = document.querySelector('.header-avatar');
+                    if (headerAvatar && settingsFromDB.avatar) {
+                        headerAvatar.src = settingsFromDB.avatar;
+                    }
+
+                    // Refresh settings view if open
+                    if (typeof window.renderSettings === 'function') {
+                        const settingsSection = document.getElementById('content-settings');
+                        if (settingsSection && settingsSection.style.display !== 'none') {
+                            window.renderSettings();
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error setting up settings listener:", error);
+            }
+        };
+
+
         // Use short references locally to avoid breaking existing code that uses the local names
         let students = window.students;
         let pensumContent = window.pensumContent;
@@ -570,9 +674,23 @@
         });
 
         // MIGRATION & SAVE SYSTEM
+        // MIGRATION & SAVE SYSTEM
         window.save = function () {
+            // Save to LocalStorage (Cache)
             localStorage.setItem('design_students', JSON.stringify(students));
             localStorage.setItem('design_pensum_content', JSON.stringify(pensumContent));
+
+            // Sync to Firebase
+            if (window.DBService) {
+                // We don't save students here anymore as they are saved individually
+                // window.DBService.saveStudents(students); 
+
+                // Save Pensum if changed
+                if (window.DBService.savePensumContent) {
+                    window.DBService.savePensumContent(pensumContent);
+                }
+            }
+
             if (typeof renderStudents === 'function') renderStudents();
             if (typeof updateStats === 'function') updateStats();
 
@@ -580,6 +698,58 @@
             if (typeof checkCriticalPoints === 'function') checkCriticalPoints();
             if (typeof renderStagnantStudents === 'function') renderStagnantStudents();
         };
+
+        // === REAL-TIME DEPARTMENTS SYNC ===
+        window.loadDepartmentsFromFirebase = async (retryCount = 0) => {
+            if (!window.DBService) {
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadDepartmentsFromFirebase(retryCount + 1), 500);
+                    return;
+                }
+                return;
+            }
+
+            console.log("🚀 Setting up Real-time Departments Listener...");
+
+            try {
+                if (window.departmentsListener) {
+                    window.departmentsListener();
+                }
+
+                window.departmentsListener = window.DBService.listenToDepartments((deptsFromDB) => {
+                    console.log(`🔄 Real-time departments update received: ${deptsFromDB.length}`);
+
+                    if (deptsFromDB && deptsFromDB.length > 0) {
+                        window.availableDepartments = deptsFromDB;
+                        localStorage.setItem('availableDepartments', JSON.stringify(deptsFromDB));
+
+                        // Update settings view if open
+                        if (typeof window.renderSettings === 'function') {
+                            const settingsSection = document.getElementById('content-settings');
+                            if (settingsSection && settingsSection.style.display !== 'none') {
+                                window.renderSettings();
+                            }
+                        }
+                    } else {
+                        // Init defaults if empty in DB
+                        console.log("📤 Migrating departments to Firebase...");
+                        if (window.DBService && typeof window.DBService.saveDepartments === 'function') {
+                            window.DBService.saveDepartments(window.availableDepartments);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error setting up departments listener:", error);
+            }
+        };
+
+        // Initialize Real-time Listeners
+        if (window.loadStudents) window.loadStudents();
+        if (window.loadPensumFromFirebase) window.loadPensumFromFirebase();
+        if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
+        if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
+
+
 
         // Sections & UI
         const sections = {
@@ -806,14 +976,19 @@
             // Also add to default specialties
             if (!specialties[dept]) specialties[dept] = ["Módulo 1: Introducción"];
 
-            saveGlobalData(); // Saves departments and specialties
+            // SAVE TO FIREBASE
+            localStorage.setItem('availableDepartments', JSON.stringify(window.availableDepartments));
+            if (window.DBService && window.DBService.saveDepartments) {
+                window.DBService.saveDepartments(window.availableDepartments);
+            }
+
             logAction('Crear Usuario', `Creó nuevo instructor: ${name} (${dept})`);
 
             document.getElementById('new-instructor-name').value = '';
             document.getElementById('new-department-name').value = '';
 
-            window.showToast("Instructor Creado. Recarga la página.", 'success');
-            renderSettings();
+            window.showToast("Instructor Creado. Sincronizando...", 'success');
+            // Render will happen automatically via listener
         };
 
         window.deleteInstructor = (idx) => {
@@ -824,12 +999,19 @@
             }
             if (!confirm(`¿Borrar a ${dept.instructor}?`)) return;
 
-            window.logAction('Borrar Usuario', `Eliminó a: ${dept.instructor}`);
             window.availableDepartments.splice(idx, 1);
-            saveGlobalData();
-            window.showToast(`Instructor ${dept.instructor} eliminado.`, 'success');
-            renderSettings();
+
+            // SAVE TO FIREBASE
+            localStorage.setItem('availableDepartments', JSON.stringify(window.availableDepartments));
+            if (window.DBService && window.DBService.saveDepartments) {
+                window.DBService.saveDepartments(window.availableDepartments);
+            }
+
+            logAction('Borrar Usuario', `Borró al instructor: ${dept.instructor}`);
+            window.showToast("Instructor eliminado.", 'success');
         };
+
+
 
         window.renderSettingsUsers = () => {
             const container = document.getElementById('settings-user-list');
