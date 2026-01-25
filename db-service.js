@@ -440,5 +440,12 @@ const DBService = {
 
 // Exportar para uso global
 window.DBService = DBService;
+// Helper for recovery
+window.DBServiceModule = DBService;
+
+// Dispatch event to notify listeners that DB is ready
+window.dispatchEvent(new Event('DBServiceReady'));
+console.log("✅ DBService initialized and event dispatched");
+
 export default DBService;
 

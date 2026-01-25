@@ -680,14 +680,29 @@
             localStorage.setItem('design_students', JSON.stringify(students));
             localStorage.setItem('design_pensum_content', JSON.stringify(pensumContent));
 
+            console.log("💾 GLOBAL SAVE: Saving to LocalStorage...");
+
             // Sync to Firebase
             if (window.DBService) {
+                console.log("☁️ DBService is available.");
                 // We don't save students here anymore as they are saved individually
                 // window.DBService.saveStudents(students); 
 
                 // Save Pensum if changed
                 if (window.DBService.savePensumContent) {
-                    window.DBService.savePensumContent(pensumContent);
+                    console.log("⏳ Attempting to sync Pensum to Firebase...");
+                    window.DBService.savePensumContent(pensumContent)
+                        .then(() => console.log("✅ PENSUM SYNCED SUCCESSFULLY TO FIREBASE"))
+                        .catch(err => console.error("❌ ERROR SYNCING PENSUM:", err));
+                } else {
+                    console.error("❌ window.DBService.savePensumContent is undefined!");
+                }
+            } else {
+                console.warn("⚠️ window.DBService is NOT available. Saving only to LocalStorage.");
+                // Try recovery
+                if (window.DBServiceModule) {
+                    window.DBService = window.DBServiceModule;
+                    console.log("♻️ Recovered DBService from Module back-up.");
                 }
             }
 
@@ -744,10 +759,60 @@
         };
 
         // Initialize Real-time Listeners
-        if (window.loadStudents) window.loadStudents();
-        if (window.loadPensumFromFirebase) window.loadPensumFromFirebase();
-        if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
-        if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
+
+        // 1. Try immediate load
+        if (window.DBService) {
+            if (window.loadStudents) window.loadStudents();
+            if (window.loadPensumFromFirebase) window.loadPensumFromFirebase();
+            if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
+            if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
+        } else {
+            console.log("⏳ Waiting for DBServiceReady event...");
+        }
+
+        // 2. Listen for event (Race condition fix)
+        window.addEventListener('DBServiceReady', () => {
+            console.log("🔥 DBService Ready Event Detected!");
+            if (window.loadStudents) window.loadStudents();
+            if (window.loadPensumFromFirebase) window.loadPensumFromFirebase();
+            if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
+            if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
+        });
+
+        // 3. Force Sync Manual Function
+        window.forceCloudSync = async () => {
+            if (!window.DBService) {
+                window.showToast("Error: DBService no conectado.", "error");
+                return;
+            }
+
+            window.showToast("Iniciando sincronización forzada...", "info");
+            console.log("☁️ STARTING FORCED SYNC...");
+
+            try {
+                // 1. Sync Pensum
+                if (window.pensumContent) {
+                    await window.DBService.savePensumContent(window.pensumContent);
+                    console.log("✅ Pensum synced");
+                }
+
+                // 2. Sync Departments
+                if (window.availableDepartments) {
+                    await window.DBService.saveDepartments(window.availableDepartments);
+                    console.log("✅ Departments synced");
+                }
+
+                // 3. Sync Settings
+                await window.DBService.saveSettings(window.academySettings || {});
+                console.log("✅ Settings synced");
+
+                window.showToast("¡Sincronización Cloud Completada!", "success");
+            } catch (error) {
+                console.error("Sync Error:", error);
+                window.showToast("Error en sincronización: " + error.message, "error");
+            }
+        };
+
 
 
 

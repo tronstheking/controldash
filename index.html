@@ -1181,7 +1181,12 @@
                 </div>
 
                 <!-- Footer Save Button -->
-                <div style="margin-top: 30px; display:flex; justify-content:center; margin-bottom: 50px;">
+                <div style="margin-top: 30px; display:flex; justify-content:center; gap: 15px; margin-bottom: 50px;">
+                    <button class="btn" onclick="forceCloudSync()"
+                        style="padding: 15px 30px; font-size: 16px; border-radius: 50px; background: #3b82f6; color: white; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);">
+                        <i data-lucide="cloud-upload"></i> Forzar Sincronización
+                    </button>
+
                     <button class="btn btn-primary" onclick="saveSettings()"
                         style="padding: 15px 40px; font-size: 16px; border-radius: 50px; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);">
                         <i data-lucide="save"></i> Guardar Cambios
