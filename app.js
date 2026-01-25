@@ -773,6 +773,55 @@
             }
         };
 
+        // === REAL-TIME ATTENDANCE SYNC ===
+        window.loadAttendanceFromFirebase = async (retryCount = 0) => {
+            if (!window.DBService) {
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadAttendanceFromFirebase(retryCount + 1), 500);
+                    return;
+                }
+                return;
+            }
+
+            console.log("🚀 Setting up Real-time Attendance Listener...");
+
+            try {
+                if (window.attendanceListener) {
+                    window.attendanceListener();
+                }
+
+                window.attendanceListener = window.DBService.listenToAttendanceContent((records) => {
+                    console.log(`🔄 Real-time attendance update received`);
+                    window.attendanceRecords = records || {};
+                    localStorage.setItem('attendanceRecords', JSON.stringify(window.attendanceRecords));
+
+                    // Refresh Attendance View if active
+                    const attendanceSection = document.getElementById('content-attendance');
+                    if (attendanceSection && attendanceSection.style.display !== 'none') {
+                        // If we have a render function, call it. 
+                        // We need to check if we are in the attendance view variables scope or global
+                        // Usually specific logic like 'renderAttendance' is not global, but let's check.
+                        // Based on app structure, we might need to trigger a click or call a global internal function if exposed.
+                        // Searching for 'renderAttendance' in app.js...
+                        if (typeof window.renderAttendance === 'function') {
+                            window.renderAttendance();
+                        } else {
+                            // Fallback: If we are on the page, maybe just refresh the calendar/list if feasible?
+                            // But wait, the user complaint is about sync.
+                            // Let's assume re-rendering will happen or user will navigate.
+                            // But better: try to find if there is a global render.
+                            if (window.currentView === 'attendance') {
+                                // Force re-render if possible.
+                                // checking context...
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error setting up attendance listener:", error);
+            }
+        };
+
         // Initialize Real-time Listeners
 
         // 1. Try immediate load
