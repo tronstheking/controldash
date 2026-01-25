@@ -15,7 +15,8 @@ import {
     query,
     where,
     onSnapshot,
-    serverTimestamp
+    serverTimestamp,
+    deleteField
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 const DBService = {
@@ -490,6 +491,48 @@ const DBService = {
                 callback({});
             }
         });
+    },
+
+    /**
+     * DELETE MODULE (Hard Delete)
+     */
+    async deletePensumModule(moduleName, currentCategory) {
+        try {
+            // 1. Delete content (modules.ModuleName)
+            const contentRef = doc(db, 'pensum_content', 'all');
+            // We use updateDoc with deleteField() to remove a specific key from the map
+            // BUT since we support root-level too, we try both just in case, or just root if that's what we use now.
+            // The safest is to try to delete it as a root field.
+            await updateDoc(contentRef, {
+                [moduleName]: deleteField(),
+                [`modules.${moduleName}`]: deleteField() // Try nested too just in case
+            });
+
+            // 2. Remove from Metadata (Category)
+            if (currentCategory) {
+                const metaRef = doc(db, 'pensum_content', 'metadata');
+                const metaSnap = await getDoc(metaRef);
+                if (metaSnap.exists()) {
+                    const customModules = metaSnap.data().customModules || {};
+                    if (customModules[currentCategory]) {
+                        // Filter out the module
+                        customModules[currentCategory] = customModules[currentCategory].filter(m => m !== moduleName);
+                        // Update metadata
+                        await updateDoc(metaRef, {
+                            customModules: customModules,
+                            updatedAt: serverTimestamp()
+                        });
+                    }
+                }
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error borrando módulo:', error);
+            // If error is "No document to update", maybe it didn't exist, treat as success
+            if (error.code === 'not-found') return { success: true };
+            return { success: false, error: error.message };
+        }
     }
 };
 

@@ -224,7 +224,7 @@ window.savePensumChanges = () => {
     if (window.showToast) window.showToast("Pensum sincronizado en tiempo real.", "success");
 };
 
-window.deleteModule = () => {
+window.deleteModule = async () => {
     const title = document.getElementById('edit-module-id').value;
 
     // If it's a new module (empty ID), just close modal
@@ -233,17 +233,55 @@ window.deleteModule = () => {
         return;
     }
 
-    if (!confirm(`¿Estás seguro que deseas ocultar el módulo "${title}"? esta acción afectará a todos los usuarios.`)) return;
+    if (!confirm(`⚠️ PELIGRO: ¿Estás seguro que deseas ELIMINAR PERMANENTEMENTE el módulo "${title}"?\n\nEsta acción NO se puede deshacer y borrará el módulo de la base de datos para TODOS los usuarios.`)) return;
 
-    // Add to deleted list
+    // Determine current category from UI or Metadata
+    const currentActiveChip = document.querySelector('.filter-chip.active');
+    let currentCategory = null;
+
+    // Attempt to find category in metadata
+    if (window.pensumMetadata) {
+        Object.keys(window.pensumMetadata).forEach(cat => {
+            if (window.pensumMetadata[cat].includes(title)) {
+                currentCategory = cat;
+            }
+        });
+    }
+
+    // Cloud Delete
+    if (window.DBService && window.DBService.deletePensumModule) {
+        window.showToast("Eliminando de la nube...", "info");
+        const result = await window.DBService.deletePensumModule(title, currentCategory);
+        if (result.success) {
+            console.log("✅ Module deleted from cloud");
+            window.showToast("Módulo eliminado permanentemente.", "success");
+        } else {
+            console.error("❌ Cloud delete failed:", result.error);
+            window.showToast("Error al eliminar de la nube: " + result.error, "error");
+            return;
+        }
+    }
+
+    // Local Cleanup (Legacy/Cache)
     const deleted = JSON.parse(localStorage.getItem('deletedModules') || '[]');
     if (!deleted.includes(title)) {
         deleted.push(title);
         localStorage.setItem('deletedModules', JSON.stringify(deleted));
     }
 
+    // Update Local Metadata Cache
+    if (currentCategory && window.pensumMetadata && window.pensumMetadata[currentCategory]) {
+        window.pensumMetadata[currentCategory] = window.pensumMetadata[currentCategory].filter(m => m !== title);
+        localStorage.setItem('customModules', JSON.stringify(window.pensumMetadata));
+    }
+
     window.closeEditPensumModal();
-    refreshCurrentPensumView();
+    // Force refresh
+    if (typeof refreshCurrentPensumView === 'function') refreshCurrentPensumView();
+    // Also refresh "All" view to ensure it disappears
+    setTimeout(() => {
+        if (typeof window.renderPensumConfig === 'function') window.renderPensumConfig();
+    }, 500);
 };
 
 function refreshCurrentPensumView() {
