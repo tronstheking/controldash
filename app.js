@@ -5614,7 +5614,7 @@
                         // Escapare comillas para evitar errores en el onclick
                         const safeD = d.replace(/'/g, "\\'");
                         return `
-                                                    <div class="deliverable-item ${isDone ? 'completed' : ''}" onclick="toggleGlobalDeliverable(${globalIdx}, '${safeD}')">
+                                                    <div class="deliverable-item ${isDone ? 'completed' : ''}" onclick="toggleGlobalDeliverable('${s.id}', '${safeD}')">
                                                         <div class="check-box">
                                                             ${isDone ? '<i data-lucide="check" style="width:12px;"></i>' : ''}
                                                         </div>
