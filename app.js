@@ -764,8 +764,13 @@
                     console.log(`🔄 Real-time students update: ${studentsFromDB.length} records`);
 
                     if (studentsFromDB && studentsFromDB.length > 0) {
-                        // MERGE LOGIC: Keep local 'notes' or other non-synced fields if any? 
-                        // Actually, DB is source of truth. Overwrite.
+                        // DATA NORMALIZATION: Map DB 'deliverables' to App 'completedDeliverables'
+                        studentsFromDB.forEach(s => {
+                            if (s.deliverables && !s.completedDeliverables) {
+                                s.completedDeliverables = s.deliverables;
+                            }
+                        });
+
                         window.students = studentsFromDB;
                         students = window.students; // Update local alias
 
