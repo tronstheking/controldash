@@ -765,9 +765,13 @@
 
                     if (studentsFromDB && studentsFromDB.length > 0) {
                         // DATA NORMALIZATION: Map DB 'deliverables' to App 'completedDeliverables'
+                        // AGGRESSIVE FIX: Always prefer 'deliverables' (cloud source of truth) over any legacy 'completedDeliverables'
                         studentsFromDB.forEach(s => {
-                            if (s.deliverables && !s.completedDeliverables) {
+                            if (s.deliverables) {
                                 s.completedDeliverables = s.deliverables;
+                            } else if (!s.completedDeliverables) {
+                                // Only init if neither exists
+                                s.completedDeliverables = [];
                             }
                         });
 
