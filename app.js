@@ -754,7 +754,9 @@
 
             try {
                 if (window.studentsListener) {
-                    // Optional: unsubscribe if we had one, but effectively we just replacing callback
+                    // UNSUBSCRIBE previous listener to prevent duplicate events/race conditions
+                    console.log("🔌 Unsubscribing previous student listener...");
+                    window.studentsListener();
                 }
 
                 // Listen to ALL students (null department) and filter client-side if needed
@@ -5982,8 +5984,20 @@
             if (modal) modal.classList.remove('active');
         };
 
-        window.toggleGlobalDeliverable = (studentIdx, deliverableName) => {
-            const s = students[studentIdx];
+        window.toggleGlobalDeliverable = (studentIdxOrId, deliverableName) => {
+            // Support both Index (Legacy) and ID (Robust)
+            let s;
+            if (typeof studentIdxOrId === 'string' && studentIdxOrId.length > 5) {
+                s = students.find(st => st.id === studentIdxOrId);
+            } else {
+                s = students[studentIdxOrId];
+            }
+
+            if (!s) {
+                console.error("Student not found for toggle:", studentIdxOrId);
+                return;
+            }
+
             if (!s.completedDeliverables) s.completedDeliverables = [];
 
             const idx = s.completedDeliverables.indexOf(deliverableName);
