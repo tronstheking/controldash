@@ -46,6 +46,11 @@ service cloud.firestore {
     match /pensum_content/{docId} {
       allow read, write: if isAuthenticated();
     }
+
+    // DELIVERABLES CONFIG Collection
+    match /deliverables_config/{docId} {
+      allow read, write: if isAuthenticated();
+    }
     
     // DEPARTMENTS Collection
     match /departments/{deptId} {

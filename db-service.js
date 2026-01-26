@@ -620,6 +620,35 @@ const DBService = {
                 callback({});
             }
         });
+    },
+
+    /**
+     * DELIVERABLES CONFIG - Definitions per module
+     */
+    async saveDeliverablesConfig(config) {
+        try {
+            const docRef = doc(db, 'deliverables_config', 'all');
+            await setDoc(docRef, {
+                modules: config,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return { success: true };
+        } catch (error) {
+            console.error('Error guardando configuración de entregables:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    listenToDeliverablesConfig(callback) {
+        const docRef = doc(db, 'deliverables_config', 'all');
+        return onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                console.log("🔥 Deliverables Config Snapshot received!");
+                callback(docSnap.data().modules || {});
+            } else {
+                callback({});
+            }
+        });
     }
 };
 

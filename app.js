@@ -832,6 +832,53 @@
             }
         };
 
+        // === REAL-TIME DELIVERABLES CONFIG SYNC ===
+        window.loadDeliverablesConfigFromFirebase = async (retryCount = 0) => {
+            if (!window.DBService) {
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadDeliverablesConfigFromFirebase(retryCount + 1), 500);
+                    return;
+                }
+                return;
+            }
+
+            console.log("🚀 Setting up Real-time Deliverables Config Listener...");
+
+            try {
+                if (window.deliverablesConfigListener) {
+                    window.deliverablesConfigListener();
+                }
+
+                window.deliverablesConfigListener = window.DBService.listenToDeliverablesConfig((configFromDB) => {
+                    console.log(`🔄 Real-time deliverables config update received`);
+                    if (configFromDB && Object.keys(configFromDB).length > 0) {
+                        // Merge with current to keep defaults if DB missing some
+                        // We iterate to ensure we don't lose local defaults unless overwritten
+                        Object.assign(moduleDeliverables, configFromDB);
+
+                        // Persist to local storage as backup
+                        localStorage.setItem('module_deliverables_config', JSON.stringify(moduleDeliverables));
+
+                        // Refresh Deliverables Matrix if open
+                        if (typeof renderDeliverablesMatrix === 'function') {
+                            const section = document.getElementById('content-deliverables');
+                            if (section && section.style.display !== 'none') {
+                                renderDeliverablesMatrix();
+                            }
+                        }
+                    } else {
+                        // Init defaults if empty in DB
+                        if (window.DBService && typeof window.DBService.saveDeliverablesConfig === 'function') {
+                            console.log("📤 Initializing deliverables config in Firebase...");
+                            window.DBService.saveDeliverablesConfig(moduleDeliverables);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error setting up deliverables config listener:", error);
+            }
+        };
+
         // Initialize Real-time Listeners
 
         // 1. Try immediate load
@@ -841,6 +888,7 @@
             if (window.loadSettingsFromFirebase) window.loadSettingsFromFirebase();
             if (window.loadDepartmentsFromFirebase) window.loadDepartmentsFromFirebase();
             if (window.loadAttendanceFromFirebase) window.loadAttendanceFromFirebase();
+            if (window.loadDeliverablesConfigFromFirebase) window.loadDeliverablesConfigFromFirebase();
         } else {
             console.log("⏳ Waiting for DBServiceReady event...");
         }
@@ -855,6 +903,7 @@
             if (window.loadAttendanceFromFirebase) window.loadAttendanceFromFirebase();
             if (window.loadPaymentsFromFirebase) window.loadPaymentsFromFirebase();
             if (window.loadAuditLogsFromFirebase) window.loadAuditLogsFromFirebase();
+            if (window.loadDeliverablesConfigFromFirebase) window.loadDeliverablesConfigFromFirebase();
         });
 
         // 3. Force Sync Manual Function
@@ -896,6 +945,10 @@
                 const attRecords = JSON.parse(localStorage.getItem('attendanceRecords') || '{}');
                 await window.DBService.saveAttendanceContent(attRecords);
                 console.log("✅ Attendance synced");
+
+                // 6. Sync Deliverables Config
+                await window.DBService.saveDeliverablesConfig(moduleDeliverables);
+                console.log("✅ Deliverables Config synced");
 
                 window.showToast("¡Sincronización Cloud Completada!", "success");
             } catch (error) {
@@ -5746,6 +5799,13 @@
 
             console.log('💾 Saved to localStorage');
 
+            // Sync to Firebase
+            if (window.DBService) {
+                window.DBService.saveDeliverables(student.id, student.completedDeliverables)
+                    .then(() => console.log('✅ Deliverables synced to Firebase'))
+                    .catch(e => console.error('❌ Error syncing deliverables:', e));
+            }
+
             // Re-render affected views
             if (typeof renderDeliverablesMatrix === 'function') {
                 console.log('🔄 Re-rendering deliverables matrix');
@@ -5848,6 +5908,13 @@
             // Save to localStorage
             save();
 
+            // Sync to Firebase
+            if (window.DBService) {
+                window.DBService.saveDeliverablesConfig(moduleDeliverables)
+                    .then(() => console.log('✅ Deliverables Config synced to Firebase'))
+                    .catch(e => console.error('❌ Error syncing config:', e));
+            }
+
             // Re-render deliverables matrix
             if (typeof renderDeliverablesMatrix === 'function') renderDeliverablesMatrix();
 
@@ -5879,6 +5946,12 @@
             }
 
             save();
+
+            // Sync to Firebase
+            if (window.DBService) {
+                window.DBService.saveDeliverables(s.id, s.completedDeliverables);
+            }
+
             // Full re-render is safer for progress bars
             renderDeliverablesMatrix();
         };
