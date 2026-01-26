@@ -6351,7 +6351,11 @@
                 const studentsInModule = students.filter(s => s.module === module.name).length;
 
                 cardsHtml += `
-                    <div class="module-card color-${color}" id="${moduleId}">
+                    <div class="module-card color-${color}" id="${moduleId}" style="position:relative;">
+                        ${currentUser.id === 'admin' ? `
+                        <button class="edit-module-btn" onclick="editTopics('${module.name}')" title="Editar Temario" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; transition:background 0.2s;">
+                            <i data-lucide="pencil" style="width:16px; height:16px;"></i>
+                        </button>` : ''}
                         <div>
                             <div class="module-category">${specialty}</div>
                             <h2 class="module-title">Módulo ${module.number}</h2>
