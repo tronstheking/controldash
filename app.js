@@ -621,6 +621,25 @@
                         window.pensumMetadata = customModules;
                         localStorage.setItem('customModules', JSON.stringify(customModules));
 
+                        // [RESTORED FEATURE] Merge Metadata into moduleStructure LIVE
+                        if (typeof moduleStructure !== 'undefined') {
+                            Object.keys(customModules).forEach(cat => {
+                                if (!moduleStructure[cat]) moduleStructure[cat] = [];
+                                const list = customModules[cat];
+                                list.forEach(mod => {
+                                    const modName = (typeof mod === 'object' && mod.name) ? mod.name : mod;
+                                    if (!moduleStructure[cat].some(m => m.name === modName)) {
+                                        if (typeof mod === 'object' && mod.name) {
+                                            moduleStructure[cat].push(mod);
+                                        } else {
+                                            moduleStructure[cat].push({ name: mod, number: 99, description: "Módulo personalizado" });
+                                        }
+                                    }
+                                });
+                                moduleStructure[cat].sort((a, b) => a.number - b.number);
+                            });
+                        }
+
                         // 2. Update Global Blacklist
                         window.globalDeletedModules = deletedModules;
                         localStorage.setItem('globalDeletedModules', JSON.stringify(deletedModules));
@@ -721,6 +740,22 @@
                         .catch(err => console.error("❌ ERROR SYNCING PENSUM:", err));
                 } else {
                     console.error("❌ window.DBService.savePensumContent is undefined!");
+                }
+
+                // [RESTORED FEATURE] Save Pensum Metadata (Structure)
+                if (window.DBService.savePensumMetadata) {
+                    // We need to extract the custom modules to save (or save all)
+                    // Strategy: Save everything in moduleStructure as "customModules" to ensure consistency
+                    // Or filtering? Hardcoded ones are safe, but saving them into customModules won't hurt
+                    // as long as we handle duplicates on load (which we do).
+                    // However, to keep it clean, maybe we should save `moduleStructure` directly?
+                    // Verify db-service expects object { category: [modules] }
+                    // Yes.
+
+                    // Deep clone logic or just pass reference? Pass simple object.
+                    window.DBService.savePensumMetadata(window.moduleStructure || moduleStructure)
+                        .then(() => console.log("✅ PENSUM METADATA SYNCED"))
+                        .catch(err => console.error("❌ ERROR SYNCING METADATA:", err));
                 }
             } else {
                 console.warn("⚠️ window.DBService is NOT available. Saving only to LocalStorage.");
@@ -6179,6 +6214,35 @@
                 }
             ]
         };
+
+        // [RESTORED FEATURE] Hydrate moduleStructure from LocalStorage (or Metadata)
+        const savedCustomModules = JSON.parse(localStorage.getItem('customModules') || '{}');
+        Object.keys(savedCustomModules).forEach(cat => {
+            if (!moduleStructure[cat]) moduleStructure[cat] = [];
+
+            // Merge custom modules avoiding duplicates
+            const customList = savedCustomModules[cat];
+            customList.forEach(mod => {
+                // Determine if mod is object or string (legacy)
+                const modName = (typeof mod === 'object' && mod.name) ? mod.name : mod;
+
+                // If not exists in hardcoded structure, add it
+                if (!moduleStructure[cat].some(m => m.name === modName)) {
+                    if (typeof mod === 'object' && mod.name) {
+                        moduleStructure[cat].push(mod);
+                    } else {
+                        // Legacy string fallback (we lose description/number but at least it shows)
+                        moduleStructure[cat].push({
+                            name: mod,
+                            number: 99, // default
+                            description: "Módulo personalizado"
+                        });
+                    }
+                }
+            });
+            // Sort
+            moduleStructure[cat].sort((a, b) => a.number - b.number);
+        });
 
         // Current filter state
         let currentPensumFilter = 'all';

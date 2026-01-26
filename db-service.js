@@ -567,7 +567,10 @@ const DBService = {
                 // A. Remove from Custom Categories
                 const customModules = data.customModules || {};
                 if (currentCategory && customModules[currentCategory]) {
-                    customModules[currentCategory] = customModules[currentCategory].filter(m => m !== moduleName);
+                    customModules[currentCategory] = customModules[currentCategory].filter(m => {
+                        const mName = (typeof m === 'object' && m.name) ? m.name : m;
+                        return mName !== moduleName;
+                    });
                     updates.customModules = customModules;
                 }
 
