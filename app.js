@@ -6381,6 +6381,74 @@
         }
 
         // ==========================================
+        // PENSUM CONFIGURATION MODAL (RESTORED)
+        // ==========================================
+        window.openPensumConfigModal = () => {
+            const modal = document.getElementById('pensum-config-modal');
+            if (!modal) return console.error("Pensum config modal not found");
+
+            const select = document.getElementById('new-module-specialty');
+            if (select) {
+                select.innerHTML = Object.keys(moduleStructure).map(spec => `<option value="${spec}">${spec}</option>`).join('');
+            }
+
+            modal.classList.add('active');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.closePensumConfigModal = () => {
+            const modal = document.getElementById('pensum-config-modal');
+            if (modal) modal.classList.remove('active');
+        };
+
+        window.showAddModuleForm = () => {
+            document.getElementById('new-module-name').focus();
+        };
+
+        window.saveNewModule = () => {
+            const specialty = document.getElementById('new-module-specialty').value;
+            const name = document.getElementById('new-module-name').value.trim();
+            const number = parseInt(document.getElementById('new-module-number').value);
+            const desc = document.getElementById('new-module-desc').value.trim();
+
+            if (!name || isNaN(number)) {
+                if (window.showToast) window.showToast("Completa los campos obligatorios", "warning");
+                return;
+            }
+
+            // Logic to add to moduleStructure
+            if (!moduleStructure[specialty]) moduleStructure[specialty] = [];
+
+            // Check duplication
+            if (moduleStructure[specialty].some(m => m.number === number)) {
+                if (window.showToast) window.showToast(`El módulo ${number} ya existe en ${specialty}`, "error");
+                return;
+            }
+
+            moduleStructure[specialty].push({
+                name: name,
+                number: number,
+                description: desc
+            });
+
+            // Resort by number
+            moduleStructure[specialty].sort((a, b) => a.number - b.number);
+
+            // Init logical structure for topics & deliverables
+            if (!pensumContent[name]) pensumContent[name] = ["Tema Introductorio (Editable)"];
+            if (!moduleDeliverables[name]) moduleDeliverables[name] = [];
+
+            saveGlobalData(); // Save to local & cloud
+
+            // UI Feedback
+            if (window.showToast) window.showToast("Módulo creado exitosamente", "success");
+            closePensumConfigModal();
+
+            // Refresh View
+            if (typeof renderPensumConfig === 'function') renderPensumConfig();
+        };
+
+        // ==========================================
         // FINANCE & PAYMENTS ADMIN
         // ==========================================
 
