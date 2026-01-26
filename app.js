@@ -739,6 +739,56 @@
             if (typeof renderStagnantStudents === 'function') renderStagnantStudents();
         };
 
+        // === REAL-TIME STUDENTS SYNC ===
+        window.loadStudents = async (retryCount = 0) => {
+            if (!window.DBService) {
+                if (retryCount < 5) {
+                    setTimeout(() => window.loadStudents(retryCount + 1), 500);
+                    return;
+                }
+                console.warn("DBService unavailable for loadStudents");
+                return;
+            }
+
+            console.log("🚀 Setting up Real-time Students Listener...");
+
+            try {
+                if (window.studentsListener) {
+                    // Optional: unsubscribe if we had one, but effectively we just replacing callback
+                }
+
+                // Listen to ALL students (null department) and filter client-side if needed
+                window.studentsListener = window.DBService.listenToStudents(null, (studentsFromDB) => {
+                    console.log(`🔄 Real-time students update: ${studentsFromDB.length} records`);
+
+                    if (studentsFromDB && studentsFromDB.length > 0) {
+                        // MERGE LOGIC: Keep local 'notes' or other non-synced fields if any? 
+                        // Actually, DB is source of truth. Overwrite.
+                        window.students = studentsFromDB;
+                        students = window.students; // Update local alias
+
+                        // Persist
+                        localStorage.setItem('design_students', JSON.stringify(window.students));
+
+                        // RENDER UPDATES
+                        if (typeof renderStudents === 'function') renderStudents();
+                        if (typeof updateStats === 'function') updateStats();
+                        if (typeof checkCriticalPoints === 'function') checkCriticalPoints();
+
+                        // Updates for specific views
+                        if (typeof renderDeliverablesMatrix === 'function' &&
+                            document.getElementById('content-deliverables').style.display === 'block') {
+                            renderDeliverablesMatrix();
+                        }
+                    } else {
+                        console.log("⚠️ No students in DB or empty list.");
+                    }
+                });
+            } catch (error) {
+                console.error("Error setting up students listener:", error);
+            }
+        };
+
         // === REAL-TIME DEPARTMENTS SYNC ===
         window.loadDepartmentsFromFirebase = async (retryCount = 0) => {
             if (!window.DBService) {
