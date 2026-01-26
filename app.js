@@ -6212,6 +6212,31 @@
                     name: "Proyecto Final Viral",
                     description: "Crea contenido viral optimizado para plataformas digitales."
                 }
+            ],
+            "Inteligencia Artificial": [
+                {
+                    number: 1,
+                    name: "Ingeniería de Prompts",
+                    description: "Domina el arte de crear instrucciones precisas para IAs generativas."
+                },
+                {
+                    number: 2,
+                    name: "Creación de Assets con IA",
+                    description: "Genera imágenes, videos y voces sintéticas para proyectos digitales."
+                }
+            ],
+            "Marketing 5.0": [
+                { number: 1, name: "Fundamentos de Marketing 5.0", description: "Estrategias de marketing modernas potenciadas por tecnología." },
+                { number: 2, name: "Investigación con IA", description: "Análisis de mercado y competencia acelerado con IA." },
+                { number: 3, name: "Estrategia de Contenidos & Copy", description: "Creación de contenido viral y persuasivo." },
+                { number: 4, name: "Business Manager (Meta)", description: "Publicidad avanzada en Facebook e Instagram." },
+                { number: 5, name: "Google Ads & Analytics", description: "Campaña de búsqueda y análisis de datos." },
+                { number: 6, name: "Automatización & Chatbots", description: "Optimización de flujos de venta." }
+            ],
+            "Experto en Excel": [
+                { number: 1, name: "Excel Básico", description: "Fundamentos, fórmulas básicas y manejo de interfaz." },
+                { number: 2, name: "Excel Intermedio", description: "Tablas dinámicas, funciones lógicas y gráficos." },
+                { number: 3, name: "Excel Avanzado", description: "Macros, VBA e integración con IA." }
             ]
         };
 
@@ -6515,6 +6540,92 @@
         // ==========================================
         // FINANCE & PAYMENTS ADMIN
         // ==========================================
+
+        // [RESTORED] EDIT TOPICS FUNCTIONS
+        window.editTopics = (moduleName) => {
+            const modal = document.getElementById('edit-pensum-modal');
+            if (!modal) return;
+
+            // Find module details
+            let moduleData = null;
+            let specialtyName = '';
+
+            Object.keys(moduleStructure).forEach(spec => {
+                const found = moduleStructure[spec].find(m => m.name === moduleName);
+                if (found) {
+                    moduleData = found;
+                    specialtyName = spec;
+                }
+            });
+
+            if (!moduleData) {
+                if (window.showToast) window.showToast("Error al cargar módulo", "error");
+                return;
+            }
+
+            document.getElementById('edit-module-id').value = moduleName; // Using name as ID for now
+            document.getElementById('edit-module-title').value = moduleName;
+
+            // Populate Topics
+            const topics = pensumContent[moduleName] || [];
+            document.getElementById('edit-module-topics').value = topics.join('\n');
+
+            // Populate Duration (if we had it, for now generic or from description?) 
+            // We don't strictly have duration in moduleStructure, so leave blank or placeholder
+            document.getElementById('edit-module-duration').value = "";
+
+            // Show proper department if needed (optional)
+
+            modal.classList.add('active');
+        };
+
+        window.closeEditPensumModal = () => {
+            const modal = document.getElementById('edit-pensum-modal');
+            if (modal) modal.classList.remove('active');
+        };
+
+        window.savePensumChanges = () => {
+            const moduleName = document.getElementById('edit-module-id').value;
+            const newTopicsText = document.getElementById('edit-module-topics').value;
+
+            if (!moduleName) return;
+
+            // Parse topics
+            const newTopics = newTopicsText.split('\n').map(t => t.trim()).filter(t => t !== "");
+
+            // Update Global Data
+            pensumContent[moduleName] = newTopics;
+
+            saveGlobalData(); // Syncs to Firebase/LocalStorage
+
+            if (window.showToast) window.showToast("Temario actualizado", "success");
+            closeEditPensumModal();
+
+            // Refresh View
+            if (typeof renderPensumConfig === 'function') renderPensumConfig();
+        };
+
+        // Helper to delete module (Advanced)
+        window.deleteModule = () => {
+            if (!confirm("¿Estás seguro de eliminar este módulo? Esta acción no se puede deshacer.")) return;
+
+            const moduleName = document.getElementById('edit-module-id').value;
+            // 1. Remove from moduleStructure
+            Object.keys(moduleStructure).forEach(spec => {
+                moduleStructure[spec] = moduleStructure[spec].filter(m => m.name !== moduleName);
+            });
+
+            // 2. Remove from pensumContent
+            delete pensumContent[moduleName];
+
+            // 3. Remove deliverable configs
+            delete moduleDeliverables[moduleName];
+
+            saveGlobalData();
+            if (window.showToast) window.showToast("Módulo eliminado", "success");
+            closeEditPensumModal();
+            if (typeof renderPensumConfig === 'function') renderPensumConfig();
+        };
 
         window.renderFinance = () => {
             // 1. Calculate Stats
