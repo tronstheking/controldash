@@ -6287,6 +6287,24 @@
             // Dynamic Pensum Filter Chips: Only show chips for current department
             const filterContainer = document.querySelector('.pensum-filters');
             if (filterContainer) {
+                // [RESTORED FEATURE] Inject Configuration Button if Admin
+                if (currentUser.id === 'admin') {
+                    // Check if button already exists to avoid dupes
+                    if (!document.getElementById('btn-config-pensum')) {
+                        const btn = document.createElement('button');
+                        btn.id = 'btn-config-pensum';
+                        btn.className = 'btn btn-primary';
+                        btn.style.marginLeft = '15px';
+                        btn.style.display = 'flex';
+                        btn.style.alignItems = 'center';
+                        btn.style.gap = '8px';
+                        btn.innerHTML = '<i data-lucide="settings-2" style="width:16px;"></i> Configurar Pensums';
+                        btn.onclick = () => window.openPensumConfigModal();
+
+                        // Append to container
+                        filterContainer.appendChild(btn);
+                    }
+                }
                 const chips = filterContainer.querySelectorAll('.filter-chip');
                 chips.forEach(chip => {
                     const onclickAttr = chip.getAttribute('onclick');
