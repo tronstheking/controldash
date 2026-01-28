@@ -7117,9 +7117,18 @@ window.renderModulesList = (list, activeCategory = 'all') => {
     // RENDER CARDS
     let html = '';
     expandedList.forEach((modName, i) => {
+        // CRITICAL FIX: Handle when modName is an object {name: "...", number: 1}
+        const moduleName = (typeof modName === 'object' && modName.name) ? modName.name : modName;
+
+        // Ensure moduleName is a string
+        if (typeof moduleName !== 'string') {
+            console.warn('Skipping invalid module:', modName);
+            return;
+        }
+
         // Color Logic
         let colorClass = 'color-blue';
-        const s = modName.toLowerCase();
+        const s = moduleName.toLowerCase();
         if (s.includes('photoshop')) colorClass = 'color-blue';
         else if (s.includes('illustrator')) colorClass = 'color-orange';
         else if (s.includes('redes') || s.includes('social')) colorClass = 'color-pink';
@@ -7129,7 +7138,7 @@ window.renderModulesList = (list, activeCategory = 'all') => {
         else if (s.includes('excel')) colorClass = 'color-green';
         else if (s.includes('marketing') || s.includes('investigación') || s.includes('copy') || s.includes('business') || s.includes('ads') || s.includes('chatbots')) colorClass = 'color-red';
 
-        html += renderSpecialtyCard(modName, `pensum-mod-${i}`, colorClass, activeCategory);
+        html += renderSpecialtyCard(moduleName, `pensum-mod-${i}`, colorClass, activeCategory);
     });
 
     // ADD BUTTON CARD (Appended at the end)
