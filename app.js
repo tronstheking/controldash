@@ -7367,6 +7367,10 @@ window.renderPensumConfig = () => {
     console.log('📚 Final modules list to display:', modulesList);
     console.log('Total modules:', modulesList.length);
 
+    // DEBUG: Check what's in pensumMetadata
+    console.log('🔍 pensumMetadata (customModules):', window.pensumMetadata);
+    console.log('🔍 pensumContent keys:', window.pensumContent ? Object.keys(window.pensumContent) : 'not loaded');
+
     // Render Filter Chips (Categories)
     if (filterContainer) {
         let filterHTML = `<button class="filter-chip active" onclick="filterPensumByCategory('all')" style="background:var(--primary); color:white;">Todos</button>`;
