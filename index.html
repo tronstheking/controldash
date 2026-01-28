@@ -1196,6 +1196,31 @@
     </div>
 
 
+    <!-- Pensum View -->
+    <div id="content-pensum" class="view-section" style="display: none;">
+        <div class="data-card">
+            <div class="card-header">
+                <div>
+                    <h2>Gestión del Pensum</h2>
+                    <p style="font-size:12px; color:var(--text-muted);">
+                        Administra los módulos y contenidos de cada especialidad
+                    </p>
+                </div>
+            </div>
+
+            <!-- Filtros por Departamento -->
+            <div id="pensum-filters-container" style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <!-- Los filtros se generan dinámicamente -->
+            </div>
+
+            <!-- Grid de Módulos -->
+            <div id="pensum-grid-container" class="pensum-grid">
+                <!-- Las tarjetas se generan dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+
     <!-- SECTION: MATRIX (God Mode) -->
     <div id="content-matrix" class="view-section" style="display: none;">
         <div class="data-card">
@@ -2048,6 +2073,52 @@
     <!-- CORE LOGIC: CACHE BUSTED -->
     <script src="app.js?v=PROMOTION_FIX_V1"></script>
     <script src="temp_pensum_logic.js?v=PENSUM_FILTER_FIX_V1"></script>
+
+    <!-- Pensum Navigation Listener -->
+    <script>
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Connect the Pensum navigation button
+            const pensumBtn = document.getElementById('view-pensum');
+            if (pensumBtn) {
+                pensumBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    // Hide all sections
+                    document.querySelectorAll('.view-section').forEach(section => {
+                        section.style.display = 'none';
+                    });
+
+                    // Remove active class from all nav items
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+
+                    // Show pensum section
+                    const pensumSection = document.getElementById('content-pensum');
+                    if (pensumSection) {
+                        pensumSection.style.display = 'block';
+                    }
+
+                    // Add active class to pensum button
+                    pensumBtn.classList.add('active');
+
+                    // Update page title
+                    const pageTitle = document.getElementById('page-title');
+                    if (pageTitle) {
+                        pageTitle.textContent = 'Gestionar Pensum';
+                    }
+
+                    // Render pensum content
+                    if (typeof window.renderPensumConfig === 'function') {
+                        window.renderPensumConfig();
+                    } else {
+                        console.error('renderPensumConfig function not found');
+                    }
+                });
+            }
+        });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
