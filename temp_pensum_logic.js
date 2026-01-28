@@ -292,7 +292,19 @@ function refreshCurrentPensumView() {
         const match = oc.match(/'([^']+)'/);
         if (match) currentCategory = match[1];
     }
-    window.filterPensumByCategory(currentCategory);
+
+    console.log('🔄 Refreshing pensum view for category:', currentCategory);
+
+    // Force a complete re-render to ensure new modules appear
+    if (typeof window.renderPensumConfig === 'function') {
+        // Small delay to ensure Firebase listener has processed the update
+        setTimeout(() => {
+            window.renderPensumConfig();
+        }, 300);
+    } else {
+        // Fallback to filterPensumByCategory
+        window.filterPensumByCategory(currentCategory);
+    }
 }
 
 // ---------------------------------------------------------
