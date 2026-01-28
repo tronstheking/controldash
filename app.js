@@ -7120,15 +7120,19 @@ window.renderModulesList = (list, activeCategory = 'all') => {
 
     // RENDER CARDS
     let html = '';
+    console.log('📋 Rendering cards for modules:', expandedList);
+
     expandedList.forEach((modName, i) => {
         // CRITICAL FIX: Handle when modName is an object {name: "...", number: 1}
         const moduleName = (typeof modName === 'object' && modName.name) ? modName.name : modName;
 
         // Ensure moduleName is a string
         if (typeof moduleName !== 'string') {
-            console.warn('Skipping invalid module:', modName);
+            console.warn('⚠️ Skipping invalid module:', modName);
             return;
         }
+
+        console.log(`🎴 Processing card ${i + 1}/${expandedList.length}: "${moduleName}"`);
 
         // Color Logic
         let colorClass = 'color-blue';
@@ -7142,7 +7146,14 @@ window.renderModulesList = (list, activeCategory = 'all') => {
         else if (s.includes('excel')) colorClass = 'color-green';
         else if (s.includes('marketing') || s.includes('investigación') || s.includes('copy') || s.includes('business') || s.includes('ads') || s.includes('chatbots')) colorClass = 'color-red';
 
-        html += renderSpecialtyCard(moduleName, `pensum-mod-${i}`, colorClass, activeCategory);
+        const cardHTML = renderSpecialtyCard(moduleName, `pensum-mod-${i}`, colorClass, activeCategory);
+
+        if (cardHTML) {
+            html += cardHTML;
+            console.log(`✅ Card rendered for "${moduleName}"`);
+        } else {
+            console.warn(`❌ No card HTML generated for "${moduleName}" (might be deleted)`);
+        }
     });
 
     // ADD BUTTON CARD (Appended at the end)
