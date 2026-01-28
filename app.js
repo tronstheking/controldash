@@ -7327,14 +7327,18 @@ window.renderPensumConfig = () => {
     // Each department should only see modules that belong to their specialties
     // Admin users see ALL modules across all departments
     let modulesList = [];
-    let specialtiesMap = window.specialties || GLOBAL_SPECIALTIES_MAP;
+
+    // CRITICAL FIX: Use pensumMetadata (from Firebase) instead of hardcoded specialtiesMap
+    // pensumMetadata has the REAL, updated list of modules including custom ones
+    const customMap = window.pensumMetadata || JSON.parse(localStorage.getItem('customModules') || '{}');
+    const specialtiesMap = window.specialties || GLOBAL_SPECIALTIES_MAP;
 
     // Manual filtering logic
     // 1. Get User's Roles/Specialties (e.g. ["Diseño Gráfico", "Diseño Web"])
     let userRoles = [];
     if (currentUser.id === 'admin') {
         console.log('👑 Admin user detected - showing all modules');
-        userRoles = Object.keys(specialtiesMap); // Admin sees everything
+        userRoles = Object.keys(customMap).length > 0 ? Object.keys(customMap) : Object.keys(specialtiesMap);
     } else {
         userRoles = currentUser.specialties || [];
 
@@ -7350,13 +7354,21 @@ window.renderPensumConfig = () => {
         console.log('User roles/specialties after mapping:', userRoles);
     }
 
-    // 2. Map Roles to MODULE NAMES using the Map
+    // 2. Map Roles to MODULE NAMES using customMap FIRST (has custom modules), fallback to specialtiesMap
     userRoles.forEach(role => {
-        if (specialtiesMap[role]) {
-            console.log(`Mapping specialty "${role}" to modules:`, specialtiesMap[role]);
+        // PRIORITY 1: Check customMap (Firebase metadata with custom modules)
+        if (customMap[role] && Array.isArray(customMap[role])) {
+            console.log(`✅ Mapping specialty "${role}" from customMap:`, customMap[role]);
+            modulesList = [...modulesList, ...customMap[role]];
+        }
+        // PRIORITY 2: Fallback to hardcoded specialtiesMap
+        else if (specialtiesMap[role]) {
+            console.log(`⚠️ Mapping specialty "${role}" from hardcoded specialtiesMap:`, specialtiesMap[role]);
             modulesList = [...modulesList, ...specialtiesMap[role]];
-        } else {
-            console.log(`No mapping found for "${role}", adding as-is`);
+        }
+        // PRIORITY 3: Add as-is
+        else {
+            console.log(`❌ No mapping found for "${role}", adding as-is`);
             modulesList.push(role);
         }
     });
