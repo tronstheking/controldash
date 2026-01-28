@@ -2072,17 +2072,28 @@
     <!-- CORE LOGIC: CACHE BUSTED -->
     <!-- CORE LOGIC: CACHE BUSTED -->
     <script src="app.js?v=PROMOTION_FIX_V1"></script>
-    <script src="temp_pensum_logic.js?v=PENSUM_FILTER_FIX_V1"></script>
+    <!-- CRITICAL: Load pensum logic BEFORE event listeners -->
+    <script src="temp_pensum_logic.js?v=PENSUM_FIX_V2"></script>
 
     <!-- Pensum Navigation Listener -->
     <script>
         // Wait for DOM to be ready
         document.addEventListener('DOMContentLoaded', () => {
+            console.log("🔧 Setting up Pensum navigation...");
+
+            // Verify renderPensumConfig is available
+            if (typeof window.renderPensumConfig === 'function') {
+                console.log("✅ renderPensumConfig function is available");
+            } else {
+                console.error("❌ renderPensumConfig function NOT found!");
+            }
+
             // Connect the Pensum navigation button
             const pensumBtn = document.getElementById('view-pensum');
             if (pensumBtn) {
                 pensumBtn.addEventListener('click', (e) => {
                     e.preventDefault();
+                    console.log("📖 Pensum button clicked");
 
                     // Hide all sections
                     document.querySelectorAll('.view-section').forEach(section => {
@@ -2098,6 +2109,9 @@
                     const pensumSection = document.getElementById('content-pensum');
                     if (pensumSection) {
                         pensumSection.style.display = 'block';
+                        console.log("✅ Pensum section displayed");
+                    } else {
+                        console.error("❌ Pensum section not found!");
                     }
 
                     // Add active class to pensum button
@@ -2111,11 +2125,14 @@
 
                     // Render pensum content
                     if (typeof window.renderPensumConfig === 'function') {
+                        console.log("🎨 Calling renderPensumConfig...");
                         window.renderPensumConfig();
                     } else {
-                        console.error('renderPensumConfig function not found');
+                        console.error('❌ renderPensumConfig function not found!');
                     }
                 });
+            } else {
+                console.error("❌ view-pensum button not found!");
             }
         });
     </script>
