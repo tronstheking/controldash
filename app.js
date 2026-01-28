@@ -7046,25 +7046,14 @@ window.renderModulesList = (list, activeCategory = 'all') => {
 
     container.innerHTML = '';
 
-    // EXPANSION LOGIC
-    let expandedList = [];
-    const specialtiesMap = window.specialties || GLOBAL_SPECIALTIES_MAP;
-
-    list.forEach(item => {
-        if (specialtiesMap[item]) {
-            expandedList = [...expandedList, ...specialtiesMap[item]];
-        } else {
-            expandedList.push(item);
-        }
-    });
-
-    // MERGE CUSTOM MODULES
-    // Priority: 1. Cloud Metadata (window.pensumMetadata), 2. LocalStorage
+    // Get Custom Modules Map (Priority: Cloud > LocalStorage)
     const customMap = window.pensumMetadata || JSON.parse(localStorage.getItem('customModules') || '{}');
+    const specialtiesMap = window.specialties || GLOBAL_SPECIALTIES_MAP;
 
     // Get Current User for Permission Checking
     const currentUser = window.currentUser || JSON.parse(localStorage.getItem('currentUser')) || { id: 'admin' };
     const userRole = currentUser.id;
+
     // Determine allowed categories for this user
     let allowedCategories = [];
     if (userRole === 'admin') {
@@ -7081,17 +7070,26 @@ window.renderModulesList = (list, activeCategory = 'all') => {
         }
     }
 
-    // Logic: If on 'all', show all custom modules but FILTERED by user permissions.
+    let expandedList = [];
+
+    // SIMPLIFIED LOGIC: Build list based on activeCategory
     if (activeCategory === 'all') {
-        Object.keys(customMap).forEach(category => {
-            // Only show if user is admin OR has this category in their allowed list
-            if (allowedCategories.includes('*') || allowedCategories.includes(category)) {
-                expandedList = [...expandedList, ...customMap[category]];
+        // Show ALL modules from user's allowed categories
+        list.forEach(categoryOrModule => {
+            // Check if this is a category in customMap
+            if (customMap[categoryOrModule]) {
+                // It's a category with custom modules - add those
+                expandedList = [...expandedList, ...customMap[categoryOrModule]];
+            } else if (specialtiesMap[categoryOrModule]) {
+                // It's a specialty category - expand it
+                expandedList = [...expandedList, ...specialtiesMap[categoryOrModule]];
+            } else {
+                // It's a standalone module
+                expandedList.push(categoryOrModule);
             }
         });
 
-        // Handling Uncategorized / Orphaned Modules from Firebase
-        // Only show these to Admin to prevent clutter for instructors
+        // Handling Uncategorized / Orphaned Modules from Firebase (Admin only)
         if (allowedCategories.includes('*') && window.pensumContent) {
             Object.keys(window.pensumContent).forEach(key => {
                 // Only add if not already in list (avoid duplicates)
@@ -7107,11 +7105,17 @@ window.renderModulesList = (list, activeCategory = 'all') => {
             });
         }
     } else {
+        // FILTERED by specific category
         if (customMap[activeCategory]) {
-            expandedList = [...expandedList, ...customMap[activeCategory]];
+            expandedList = [...customMap[activeCategory]];
+        } else if (specialtiesMap[activeCategory]) {
+            expandedList = [...specialtiesMap[activeCategory]];
+        } else {
+            expandedList = [activeCategory];
         }
     }
 
+    // Remove duplicates
     expandedList = [...new Set(expandedList)];
 
     // RENDER CARDS
