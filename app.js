@@ -7305,38 +7305,40 @@ window.renderPensumConfig = () => {
     let modulesList = [];
     let specialtiesMap = window.specialties || GLOBAL_SPECIALTIES_MAP;
 
-    // Use helper function if available (from app.js), otherwise use fallback logic
-    if (typeof window.getDepartmentModules === 'function') {
-        console.log('✅ Using getDepartmentModules() helper');
-        modulesList = window.getDepartmentModules();
-        console.log('Modules from helper:', modulesList);
+    // Manual filtering logic
+    // 1. Get User's Roles/Specialties (e.g. ["Diseño Gráfico", "Diseño Web"])
+    let userRoles = [];
+    if (currentUser.id === 'admin') {
+        console.log('👑 Admin user detected - showing all modules');
+        userRoles = Object.keys(specialtiesMap); // Admin sees everything
     } else {
-        console.log('⚠️ Using fallback filtering logic');
-        // Fallback: Manual filtering logic
-        // 1. Get User's Roles/Specialties (e.g. ["Diseño Gráfico", "Diseño Web"])
-        let userRoles = [];
-        if (currentUser.id === 'admin') {
-            console.log('👑 Admin user detected - showing all modules');
-            userRoles = Object.keys(specialtiesMap); // Admin sees everything
-        } else {
-            userRoles = currentUser.specialties || [];
-            console.log('User roles/specialties:', userRoles);
+        userRoles = currentUser.specialties || [];
+
+        // CRITICAL FIX: Fallback mapping if specialties array is empty
+        if (userRoles.length === 0) {
+            console.log('⚠️ Specialties array empty, using ID-based mapping');
+            if (currentUser.id === 'design') userRoles = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
+            else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+            else if (currentUser.id === 'ai') userRoles = ['Inteligencia Artificial'];
+            else if (currentUser.id === 'marketing') userRoles = ['Marketing Digital', 'Marketing 5.0'];
+            else if (currentUser.id === 'excel') userRoles = ['Excel Empresarial', 'Experto en Excel'];
         }
-
-        // 2. Map Roles to MODULE NAMES using the Map
-        userRoles.forEach(role => {
-            if (specialtiesMap[role]) {
-                console.log(`Mapping specialty "${role}" to modules:`, specialtiesMap[role]);
-                modulesList = [...modulesList, ...specialtiesMap[role]];
-            } else {
-                console.log(`No mapping found for "${role}", adding as-is`);
-                modulesList.push(role);
-            }
-        });
-
-        // Remove duplicates
-        modulesList = [...new Set(modulesList)];
+        console.log('User roles/specialties after mapping:', userRoles);
     }
+
+    // 2. Map Roles to MODULE NAMES using the Map
+    userRoles.forEach(role => {
+        if (specialtiesMap[role]) {
+            console.log(`Mapping specialty "${role}" to modules:`, specialtiesMap[role]);
+            modulesList = [...modulesList, ...specialtiesMap[role]];
+        } else {
+            console.log(`No mapping found for "${role}", adding as-is`);
+            modulesList.push(role);
+        }
+    });
+
+    // Remove duplicates
+    modulesList = [...new Set(modulesList)];
 
     console.log('📚 Final modules list to display:', modulesList);
     console.log('Total modules:', modulesList.length);
