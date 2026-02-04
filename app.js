@@ -2506,9 +2506,24 @@
                         });
 
                         window.showToast(`¡Transición Exitosa! 🚀\n\n${s.name} ha pasado al área de Multimedia (Web).`, 'success');
-                        save();
-                        renderStudents();
-                        updateStats();
+
+                        // SAVE TO DB (Wait for it to ensure consistency)
+                        if (window.DBService) {
+                            window.DBService.saveStudent(s)
+                                .then(() => {
+                                    console.log("Cross-specialty promotion saved to Firebase.");
+                                    renderStudents();
+                                    updateStats();
+                                })
+                                .catch(err => {
+                                    console.error("Error saving promotion:", err);
+                                    window.showToast("Error guardando promoción en nube", "error");
+                                });
+                        } else {
+                            save();
+                            renderStudents();
+                            updateStats();
+                        }
                         return; // Done
                     }
                 }
@@ -2534,9 +2549,24 @@
                         });
 
                         window.showToast(`¡Nuevo Desafío! 🎬\n\n${s.name} ha pasado a Edición de Video (CapCut).`, 'success');
-                        save();
-                        renderStudents();
-                        updateStats();
+
+                        // SAVE TO DB (Wait for it to ensure consistency)
+                        if (window.DBService) {
+                            window.DBService.saveStudent(s)
+                                .then(() => {
+                                    console.log("Cross-specialty promotion saved to Firebase.");
+                                    renderStudents();
+                                    updateStats();
+                                })
+                                .catch(err => {
+                                    console.error("Error saving promotion:", err);
+                                    window.showToast("Error guardando promoción en nube", "error");
+                                });
+                        } else {
+                            save();
+                            renderStudents();
+                            updateStats();
+                        }
                         return; // Done
                     }
                 }
