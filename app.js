@@ -3421,7 +3421,14 @@
 
         // Helper to render a specialty card (Accordion)
         function renderSpecialtyCard(specialtyName, accordionId, themeColor) {
-            const modules = specialties[specialtyName] || [];
+            // DYNAMIC FROM FIREBASE - Read from pensumMetadata with fallback
+            let modules = (window.pensumMetadata && window.pensumMetadata[specialtyName])
+                || specialties[specialtyName]
+                || [];
+
+            // Normalize: Handle both string[] and object[] formats
+            modules = modules.map(item => typeof item === 'object' && item.name ? item.name : item);
+
             const moduleCount = modules.length;
 
             // Map icons based on name
