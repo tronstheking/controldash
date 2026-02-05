@@ -1778,8 +1778,11 @@
             const idxTopic = topics.indexOf(s.topic);
             const prog = topics.length > 0 ? Math.round(((idxTopic + 1) / topics.length) * 100) : 0;
 
-            // Career Path Logic (Modules Track)
-            const specialtyMods = specialties[s.specialty] || specialties["Diseño Gráfico"];
+            // Career Path Logic (Modules Track) - DYNAMIC FROM FIREBASE
+            // Try pensumMetadata first (Firebase), fallback to specialties (hardcoded)
+            const specialtyMods = (window.pensumMetadata && window.pensumMetadata[s.specialty])
+                || specialties[s.specialty]
+                || specialties["Diseño Gráfico"];
             const currentModIdx = specialtyMods.indexOf(s.module);
 
             const modulesTrackHTML = `
@@ -2450,7 +2453,10 @@
 
         window.promoteStudent = (idx) => {
             const s = students[idx];
-            const specialtyMods = specialties[s.specialty] || specialties["Diseño Gráfico"];
+            // DYNAMIC FROM FIREBASE - Try pensumMetadata first, fallback to hardcoded
+            const specialtyMods = (window.pensumMetadata && window.pensumMetadata[s.specialty])
+                || specialties[s.specialty]
+                || specialties["Diseño Gráfico"];
             const currentIdx = specialtyMods.indexOf(s.module);
             const nextMod = specialtyMods[currentIdx + 1];
 
