@@ -3355,10 +3355,16 @@
             const filterContainer = document.getElementById('pensum-filters-container');
             if (!container || !filterContainer) return;
 
-            // 1. Determine Specialties to Show
+            // 1. Determine Specialties to Show - DYNAMIC FROM FIREBASE
             let specsToShow = [];
             if (currentUser.id === 'admin') {
-                specsToShow = Object.keys(specialties); // Admin sees all
+                // Admin sees all - prioritize Firebase pensumMetadata
+                if (window.pensumMetadata && Object.keys(window.pensumMetadata).length > 0) {
+                    specsToShow = Object.keys(window.pensumMetadata);
+                } else {
+                    // Fallback to hardcoded if Firebase not loaded
+                    specsToShow = Object.keys(specialties);
+                }
             } else {
                 specsToShow = currentUser.specialties || []; // Department sees its own
             }
@@ -7135,7 +7141,7 @@ window.renderModulesList = (list, activeCategory = 'all') => {
         // Fallback IDs if specialties missing
         if (allowedCategories.length === 0) {
             if (userRole === 'design') allowedCategories = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
-            else if (userRole === 'multimedia') allowedCategories = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+            else if (userRole === 'multimedia') allowedCategories = ['Diseño Web', 'Edición de Video'];
             else if (userRole === 'ai') allowedCategories = ['Inteligencia Artificial'];
             else if (userRole === 'marketing') allowedCategories = ['Marketing Digital', 'Marketing 5.0'];
             else if (userRole === 'excel') allowedCategories = ['Excel Empresarial', 'Experto en Excel'];
@@ -7418,7 +7424,7 @@ window.renderPensumConfig = () => {
         if (userRoles.length === 0) {
             console.log('⚠️ Specialties array empty, using ID-based mapping');
             if (currentUser.id === 'design') userRoles = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
-            else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+            else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video'];
             else if (currentUser.id === 'ai') userRoles = ['Inteligencia Artificial'];
             else if (currentUser.id === 'marketing') userRoles = ['Marketing Digital', 'Marketing 5.0'];
             else if (currentUser.id === 'excel') userRoles = ['Excel Empresarial', 'Experto en Excel'];
@@ -7467,7 +7473,7 @@ window.renderPensumConfig = () => {
             if (userRoles.length === 0) {
                 // Fallback Mapping based on ID
                 if (currentUser.id === 'design') userRoles = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
-                else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+                else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video'];
                 else if (currentUser.id === 'ai') userRoles = ['Inteligencia Artificial'];
                 else if (currentUser.id === 'marketing') userRoles = ['Marketing Digital', 'Marketing 5.0'];
                 else if (currentUser.id === 'excel') userRoles = ['Excel Empresarial', 'Experto en Excel'];
@@ -7522,7 +7528,7 @@ window.filterPensumByCategory = (category) => {
             if (userRoles.length === 0) {
                 // Fallback Mapping based on ID (Same as above)
                 if (currentUser.id === 'design') userRoles = ['Diseño Gráfico', 'Diseño para Redes Sociales'];
-                else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video', 'Multimedia'];
+                else if (currentUser.id === 'multimedia') userRoles = ['Diseño Web', 'Edición de Video'];
                 else if (currentUser.id === 'ai') userRoles = ['Inteligencia Artificial'];
                 else if (currentUser.id === 'marketing') userRoles = ['Marketing Digital', 'Marketing 5.0'];
                 else if (currentUser.id === 'excel') userRoles = ['Excel Empresarial', 'Experto en Excel'];
