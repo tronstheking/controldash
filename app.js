@@ -649,6 +649,14 @@
                                 window.renderPensumConfig();
                             }
                         }
+
+                        // Also refresh the Pensum View (Cards Grid) if active
+                        if (typeof window.renderPensumView === 'function') {
+                            const pensumGridContainer = document.getElementById('pensum-grid-container');
+                            if (pensumGridContainer) {
+                                window.renderPensumView();
+                            }
+                        }
                     });
                 }
 
