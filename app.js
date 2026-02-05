@@ -6991,8 +6991,24 @@ window.savePensumChanges = () => {
         const customMap = JSON.parse(localStorage.getItem('customModules') || '{}');
         if (!customMap[selectedCategory]) customMap[selectedCategory] = [];
 
-        if (!customMap[selectedCategory].includes(title)) {
-            customMap[selectedCategory].push(title);
+        // Check if module already exists (by name)
+        const existingModule = customMap[selectedCategory].find(m =>
+            (typeof m === 'object' && m.name === title) || m === title
+        );
+
+        if (!existingModule) {
+            // Save as OBJECT for consistency with Firebase structure
+            const moduleObj = {
+                name: title,
+                category: selectedCategory
+            };
+            customMap[selectedCategory].push(moduleObj);
+
+            // Also update window.pensumMetadata immediately for live refresh
+            if (!window.pensumMetadata) window.pensumMetadata = {};
+            if (!window.pensumMetadata[selectedCategory]) window.pensumMetadata[selectedCategory] = [];
+            window.pensumMetadata[selectedCategory].push(moduleObj);
+
             localStorage.setItem('customModules', JSON.stringify(customMap));
 
             // SYNC METADATA TO FIREBASE
