@@ -218,9 +218,7 @@
             "Edición de Video": [
                 "Fundamentos de CapCut",
                 "Edición Dinámica",
-                "Efectos y Transiciones",
-                "Audio y Colorización",
-                "Proyecto Final Viral"
+
             ],
             // INTELIGENCIA ARTIFICIAL
             "Inteligencia Artificial": [
