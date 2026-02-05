@@ -1783,13 +1783,16 @@
             const specialtyMods = (window.pensumMetadata && window.pensumMetadata[s.specialty])
                 || specialties[s.specialty]
                 || specialties["Diseño Gráfico"];
-            const currentModIdx = specialtyMods.indexOf(s.module);
+
+            // Normalize modules: convert objects {name: "..."}  to strings
+            const normalizedMods = specialtyMods.map(item => typeof item === 'object' && item.name ? item.name : item);
+            const currentModIdx = normalizedMods.indexOf(s.module);
 
             const modulesTrackHTML = `
         <div style="margin-bottom:20px;">
             <h4 style="font-size:11px; color:#999; font-weight:700; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">TRAYECTORIA ACADÉMICA (${s.specialty})</h4>
             <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:5px; scrollbar-width:thin;">
-                ${specialtyMods.map((m, i) => {
+                ${normalizedMods.map((m, i) => {
                 let color = '#cbd5e1'; // pending gray
                 let bg = '#f8fafc';
                 let icon = 'circle';
@@ -2457,8 +2460,12 @@
             const specialtyMods = (window.pensumMetadata && window.pensumMetadata[s.specialty])
                 || specialties[s.specialty]
                 || specialties["Diseño Gráfico"];
-            const currentIdx = specialtyMods.indexOf(s.module);
-            const nextMod = specialtyMods[currentIdx + 1];
+
+            // Normalize modules: convert objects {name: "..."} to strings
+            const normalizedMods = specialtyMods.map(item => typeof item === 'object' && item.name ? item.name : item);
+
+            const currentIdx = normalizedMods.indexOf(s.module);
+            const nextMod = normalizedMods[currentIdx + 1];
 
             if (nextMod) {
                 if (!s.history) s.history = [];
