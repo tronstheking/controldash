@@ -2612,7 +2612,14 @@
                     });
 
                     window.showToast(`✨ ¡Felicidades! ${s.name} se ha graduado.`, 'success');
+                    // Save to localStorage first
                     save();
+                    // ✅ FIX: Persist graduation status to Firebase individually
+                    if (window.DBService && window.DBService.saveStudent) {
+                        window.DBService.saveStudent(s)
+                            .then(() => console.log('✅ Graduation status saved to Firebase:', s.name))
+                            .catch(err => console.error('❌ Error saving graduation to Firebase:', err));
+                    }
                     switchView('graduates');
                 }
             }
@@ -4275,6 +4282,13 @@
                 });
 
                 save();
+                // ✅ FIX: Persist reactivation to Firebase individually
+                if (window.DBService && window.DBService.saveStudent) {
+                    const reactivatedStudent = students[idx];
+                    window.DBService.saveStudent(reactivatedStudent)
+                        .then(() => console.log('✅ Reactivation saved to Firebase:', reactivatedStudent.name))
+                        .catch(err => console.error('❌ Error saving reactivation to Firebase:', err));
+                }
                 window.showToast("Alumno reactivado exitosamente.", 'success');
                 switchView('dashboard');
             }
